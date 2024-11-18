@@ -3,7 +3,7 @@ from .Component import Component,ComponentMeta
 class html(Component, metaclass=ComponentMeta):
     pass
 
-class header(Component, metaclass=ComponentMeta):
+class head(Component, metaclass=ComponentMeta):
     pass
 
 class script(Component, metaclass=ComponentMeta):

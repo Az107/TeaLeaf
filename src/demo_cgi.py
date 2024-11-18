@@ -1,5 +1,5 @@
-from CGIpy.CGI import CGI
-from CGIpy.html.HTMLElements import *
+from TeaLeaf.CGI import CGI
+from TeaLeaf.html.HTMLElements import *
 
 server = CGI()
 
@@ -11,7 +11,10 @@ js = """
 """
 
 web = html(
-    header(script(js)),
+    head(
+        Component("title","TeaLeaf"),
+        script(js)
+    ),
     body(
         h1(f"hello {server.server_vars.get("name")}"),
         button("click me").a(onclick=f"magic_button({server.server_vars["name"]})")
