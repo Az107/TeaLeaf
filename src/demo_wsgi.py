@@ -1,5 +1,5 @@
 from TeaLeaf.WSGI import WSGI
-from TeaLeaf.html.HTMLElements import *
+from TeaLeaf.Html.Elements import *
 
 
 app = WSGI()
@@ -16,7 +16,7 @@ def home():
         head(script(js)),
         body(
             h1(f"hello World"),
-            button("click me").a(onclick=f"alert('Hi')")
+            button("click me").attr(onclick=f"alert('Hi')")
         )
     )
     return [web.build()]

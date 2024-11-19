@@ -4,37 +4,46 @@ class Component:
     def __init__(self,name,*childs) -> None:
         self.name = name
         self.childs: list[Component] = list(childs)
-        self.attr = dict()
+        self.attributes = dict()
 
 
-    def a(self, **attr):
-        return self.attributes(**attr)
+    def id(self, id: str):
+        return self.attr(id=id)
 
-    def attributes(self, **attr):
-        for k in attr:
-            self.attr[k] = attr[k]
+    def classes(self, classes):
+        self.attributes["class"] = classes
         return self
+
+    def attr(self, **attr):
+        for k in attr:
+            self.attributes[k] = attr[k]
+        return self
+
 
     def append(self, child):
         self.childs.append(child)
         return self
 
+
     def __build_attr(self) -> str:
         result = ""
-        for k in self.attr:
-            result+=f'{k}="{self.attr[k]}"'
+        for k in self.attributes:
+            result+=f'{k}="{self.attributes[k]}" '
         return result;
 
 
     def build(self) -> str:
-        result = f"<{self.name} {self.__build_attr()}>"
+        result = f"<{self.name} {self.__build_attr()}>\n"
         for child in self.childs:
             if type(child) == str:
-                result+=child
+                result+=f"\t{child}\n"
             else:
-                result+=child.build()
-        result += f"</{self.name}>"
+                result+=f"\t{child.build()}"
+
+        result += f"</{self.name}>\n"
         return result
+
+
 
 class ComponentMeta(type):
     def __new__(cls, name, bases, dct):

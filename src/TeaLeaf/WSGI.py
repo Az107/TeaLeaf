@@ -1,5 +1,8 @@
 
-class WSGI:
+from TeaLeaf.Server import Interface
+from TeaLeaf.Html import Component
+
+class WSGI(Interface):
     def __init__(self):
         self.routes = {}
 
@@ -21,3 +24,6 @@ class WSGI:
         status, headers, body = self.handle_request(environ)
         start_response(status, headers)
         return [b.encode('utf-8') for b in body]
+
+    def serve(self, payload: str | Component):
+        return super().serve(payload)

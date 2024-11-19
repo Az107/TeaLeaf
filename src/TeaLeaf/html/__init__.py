@@ -1,2 +1,2 @@
 from .Component import Component
-from .HTMLElements import *
+from .Elements import *

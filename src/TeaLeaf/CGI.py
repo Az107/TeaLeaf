@@ -2,24 +2,21 @@ import os
 import sys
 from urllib.parse import parse_qs
 
-from CGIpy.html import Component
+from TeaLeaf.Server import Interface
+from TeaLeaf.Html import Component
 
 
-class CGI():
+class CGI(Interface):
     def __init__(self) -> None:
-        # Obtener los datos de entrada del formulario (si se pasan por POST)
         input_data = sys.stdin.read()
 
-        # Obtener las variables de entorno CGI
         query_string = os.environ.get("QUERY_STRING", "")
         method = os.environ.get("REQUEST_METHOD", "")
         cgi_vars = {}
 
-        # Obtener las variables de la query string
         if query_string:
             cgi_vars.update(parse_qs(query_string))
 
-        # Si el método es POST, leer los datos del cuerpo de la solicitud
         if method == "POST" and input_data:
             cgi_vars.update(parse_qs(input_data))
 
@@ -33,8 +30,8 @@ class CGI():
         self.method = method
         self.server_vars = cgi_vars;
 
-    def serve(self, output: str | Component):
-        if isinstance(output, Component):
-            print(output.build())
+    def serve(self, payload: str | Component):
+        if isinstance(payload, Component):
+            print(payload.build())
         else:
-            print(output)
+            print(payload)
