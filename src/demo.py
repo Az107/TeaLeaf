@@ -1,9 +1,11 @@
 from TeaLeaf.CGI import CGI
 from TeaLeaf.Html.Elements import *
+from TeaLeaf.Html.Component import Component
 from TeaLeaf.Html.JS import JS
 from TeaLeaf.Html.MagicComponent import FetchComponent
 
 server = CGI()
+
 
 def card(text):
     return div(
@@ -13,7 +15,6 @@ def card(text):
             button("accept").attr(onclick=f"magic_button()")
         ).classes("row")
     ).classes("card")
-
 
 
 name = server.server_vars.get("name")
@@ -32,26 +33,30 @@ css = """
 mincss = """<link rel="stylesheet" href="https://cdn.rawgit.com/Chalarangelo/mini.css/v3.0.1/dist/mini-default.min.css">"""
 userspace = FetchComponent("/example.py") if name == ["Alberto"] else h3("You are not alberto")
 
+content: Component = Component("")
 if server.method == "POST":
     content = div(
-        card(f"Hello {name}") if name != None else "Empty name",
+        card(f"Hello {name}") if name is not None else "Empty name",
         div(userspace if name != None else "").classes("card")
     )
 else:
-    content = form("/demo.py", # add a value in server to call itself
-        label(""),
-        textInput().attr(name="name"),
+    content = form(
+        "/demo.py",
+        label("Name"),
+        textInput().attr(name="name").attr(id="name"),
         textInput().attr(type="submit")
-    )
+    ).attr(method="POST")
 
 web = html(
     head(
         mincss,
-        Component("title","TeaLeaf"),
+        Component("title", "TeaLeaf"),
         script(js),
         style(css)
     ),
     body(
+        h1(server.method),
+        str(server.server_vars.__dict__),
         content
     )
 )

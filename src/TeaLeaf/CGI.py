@@ -3,7 +3,7 @@ import sys
 from urllib.parse import parse_qs
 
 from TeaLeaf.Server import Interface
-from TeaLeaf.Html import Component
+from TeaLeaf.Html.Component import Component
 
 
 class CGI(Interface):
@@ -12,7 +12,7 @@ class CGI(Interface):
 
         query_string = os.environ.get("QUERY_STRING", "")
         method = os.environ.get("REQUEST_METHOD", "")
-        cgi_vars = {}
+        cgi_vars: dict[str, object] = dict()
 
         if query_string:
             cgi_vars.update(parse_qs(query_string))
@@ -28,10 +28,17 @@ class CGI(Interface):
         cgi_vars["SCRIPT_NAME"] = os.environ.get("SCRIPT_NAME", "")
 
         self.method = method
-        self.server_vars = cgi_vars;
+        self.server_vars = cgi_vars
 
     def serve(self, payload: str | Component):
+        headers: dict[str, str] = dict()
+        for k in headers:
+            print(f"{k}: {headers[k]}")
+        print("\r\n")
+        content = payload
         if isinstance(payload, Component):
-            print(payload.build())
-        else:
-            print(payload)
+            try:
+                content = payload.build()
+            except Exception:
+                print("<h1>500 Internal Server Error</h1>")
+        print(content)

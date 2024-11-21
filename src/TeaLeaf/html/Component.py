@@ -1,11 +1,8 @@
-from typing import Any, Self
-
 class Component:
-    def __init__(self,name,*childs) -> None:
+    def __init__(self, name, *childs) -> None:
         self.name = name
         self.childs: list[Component] = list(childs)
-        self.attributes = dict()
-
+        self.attributes: dict[str, str] = dict()
 
     def id(self, id: str):
         return self.attr(id=id)
@@ -19,30 +16,26 @@ class Component:
             self.attributes[k] = attr[k]
         return self
 
-
     def append(self, child):
         self.childs.append(child)
         return self
 
-
     def __build_attr(self) -> str:
         result = ""
         for k in self.attributes:
-            result+=f'{k}="{self.attributes[k]}" '
-        return result;
-
+            result += f'{k}="{self.attributes[k]}"'
+        return result
 
     def build(self) -> str:
         result = f"<{self.name} {self.__build_attr()}>\n"
         for child in self.childs:
-            if type(child) == str:
-                result+=f"\t{child}\n"
+            if type(child) is str:
+                result += f"\t{child}\n"
             else:
-                result+=f"\t{child.build()}"
+                result += f"\t{child.build()}"
 
         result += f"</{self.name}>\n"
         return result
-
 
 
 class ComponentMeta(type):

@@ -1,6 +1,7 @@
 
 from TeaLeaf.Server import Interface
-from TeaLeaf.Html import Component
+from TeaLeaf.Html.Component import Component
+
 
 class WSGI(Interface):
     def __init__(self):
