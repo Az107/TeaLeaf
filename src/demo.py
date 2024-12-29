@@ -41,7 +41,7 @@ if server.method == "POST":
     )
 else:
     content = form(
-        "/demo.py",
+        server.server_vars.SCRIPT_NAME,
         label("Name"),
         textInput().attr(name="name").attr(id="name"),
         textInput().attr(type="submit")
@@ -56,7 +56,7 @@ web = html(
     ),
     body(
         h1(server.method),
-        str(server.server_vars.__dict__),
+        str(server.server_vars),
         content
     )
 )

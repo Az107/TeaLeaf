@@ -4,7 +4,6 @@ from TeaLeaf.Html.Elements import div, script
 import uuid
 
 
-
 class FetchComponent(Component):
     def __init__(self, url) -> None:
         self._id = str(uuid.uuid4())

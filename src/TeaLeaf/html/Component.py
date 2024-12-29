@@ -27,14 +27,17 @@ class Component:
         return result
 
     def build(self) -> str:
-        result = f"<{self.name} {self.__build_attr()}>\n"
-        for child in self.childs:
-            if type(child) is str:
-                result += f"\t{child}\n"
-            else:
-                result += f"\t{child.build()}"
+        if len(self.childs) == 0:
+            result = f"<{self.name} {self.__build_attr()}/>\n"
+        else:
+            result = f"<{self.name} {self.__build_attr()}>\n"
+            for child in self.childs:
+                if type(child) is str:
+                    result += f"\t{child}\n"
+                else:
+                    result += f"\t{child.build()}"
 
-        result += f"</{self.name}>\n"
+            result += f"</{self.name}>\n"
         return result
 
 
