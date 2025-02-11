@@ -41,7 +41,7 @@ if server.method == "POST":
     )
 else:
     content = form(
-        server.server_vars.SCRIPT_NAME,
+        server.server_vars["SCRIPT_FILENAME"],
         label("Name"),
         textInput().attr(name="name").attr(id="name"),
         textInput().attr(type="submit")

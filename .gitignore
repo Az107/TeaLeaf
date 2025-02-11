@@ -2,3 +2,7 @@
 *.pyc
 .DS_Store
 *.pyc
+src/.DS_Store
+src/.DS_Store
+.DS_Store
+.pyc

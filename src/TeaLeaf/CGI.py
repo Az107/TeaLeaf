@@ -26,6 +26,7 @@ class CGI(Interface):
         cgi_vars["QUERY_STRING"] = query_string
         cgi_vars["PATH_INFO"] = os.environ.get("PATH_INFO", "")
         cgi_vars["SCRIPT_NAME"] = os.environ.get("SCRIPT_NAME", "")
+        cgi_vars["SCRIPT_FILENAME"] = os.environ.get("SCRIPT_FILENAME", "")
 
         self.method = method
         self.server_vars = cgi_vars
