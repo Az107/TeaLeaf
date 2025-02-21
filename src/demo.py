@@ -1,9 +1,8 @@
 from TeaLeaf.CGI import CGI
-from TeaLeaf.Html.Elements import *
+from TeaLeaf.Html.Elements import head, div, html, button, h1, h3, form, body, label, textInput, script, style
 from TeaLeaf.Html.Component import Component
 from TeaLeaf.Html.JS import JS
 from TeaLeaf.Html.MagicComponent import FetchComponent
-
 server = CGI()
 
 
@@ -11,8 +10,8 @@ def card(text):
     return div(
         h1(text),
         div(
-            button("remove").attr(onclick=f"magic_button()"),
-            button("accept").attr(onclick=f"magic_button()")
+            button("remove").attr(onclick="magic_button()"),
+            button("accept").attr(onclick="magic_button()")
         ).classes("row")
     ).classes("card")
 

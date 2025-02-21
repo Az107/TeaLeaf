@@ -1,8 +1,29 @@
+from TeaLeaf.Server import HttpRequest
 from TeaLeaf.WSGI import WSGI
-from TeaLeaf.Html.Elements import *
+from TeaLeaf.Html import Elements as e
+from TeaLeaf.Html.MagicComponent import FetchComponent
 
 
 app = WSGI()
+
+mincss = """<link rel="stylesheet" href="https://cdn.rawgit.com/Chalarangelo/mini.css/v3.0.1/dist/mini-default.min.css">"""
+
+@app.route("/health")
+def health(req: HttpRequest):
+    return {"status": "ok","method": req.method, "path": req.path}
+
+@app.route("/user")
+def user():
+    return "no logged"
+
+@app.route("/example")
+def example(req: HttpRequest):
+    userCard = e.divRow(
+        e.div("Username {{name}}"),
+        e.button("logout").attr(onclick="alert('login out')")
+    )
+    return userCard
+
 
 @app.route('/')
 def home():
@@ -11,15 +32,20 @@ def home():
             alert("Hello " + name)
         }
     """
-
-    web = html(
-        head(script(js)),
-        body(
-            h1(f"hello World"),
-            button("click me").attr(onclick=f"alert('Hi')")
+    name = "Alberto"
+    userspace = FetchComponent("/example") if name == "Alberto" else e.h3("You are not alberto")
+    ifconfig = FetchComponent("https://ifconfig.co/json")
+    web = e.html(
+        mincss,
+        e.head(e.script(js)),
+        e.body(
+            e.h1("Hello World around music"),
+            userspace,
+            ifconfig,
+            e.button("click me").attr(onclick="alert('Hi')")
         )
     )
-    return [web.build()]
+    return web
 
 
 application = app.wsgi_app  # Punto de entrada WSGI

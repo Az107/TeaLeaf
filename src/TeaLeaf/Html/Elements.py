@@ -37,6 +37,19 @@ class div(Component, metaclass=ComponentMeta):
     pass
 
 
+class divRow(Component):
+    def __init__(self, *childs):
+        super().__init__("div", *childs)
+        self.attr(style="display: flex; flex-directoion: row")
+    pass
+
+class divCol(Component):
+    def __init__(self, *childs):
+        super().__init__("div", *childs)
+        self.attr(style="display: flex; flex-directoion: column")
+    pass
+
+
 class button(Component, metaclass=ComponentMeta):
     pass
 
