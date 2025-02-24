@@ -1,6 +1,6 @@
 from TeaLeaf.Server import HttpRequest
 from TeaLeaf.WSGI import WSGI
-from TeaLeaf.Html import Elements as e
+from TeaLeaf.Html.Elements import html, div, divRow, button, h1,h3, head, body,script
 from TeaLeaf.Html.MagicComponent import FetchComponent
 
 
@@ -10,7 +10,7 @@ mincss = """<link rel="stylesheet" href="https://cdn.rawgit.com/Chalarangelo/min
 
 @app.route("/health")
 def health(req: HttpRequest):
-    return {"status": "ok","method": req.method, "path": req.path}
+    return {"status": "ok","method": req.method, "path": req.path, "body": str(req.json())}
 
 @app.route("/user")
 def user():
@@ -18,9 +18,14 @@ def user():
 
 @app.route("/example")
 def example(req: HttpRequest):
-    userCard = e.divRow(
-        e.div("Username {{name}}"),
-        e.button("logout").attr(onclick="alert('login out')")
+    print(req.body)
+    name = req.json()["name"]
+    userCard = divRow(
+        script("""
+            console.log("loaded");
+            """),
+        div(f"Username {name}"),
+        button("logout").attr(onclick="alert('login out')").style(color="blue")
     )
     return userCard
 
@@ -33,16 +38,16 @@ def home():
         }
     """
     name = "Alberto"
-    userspace = FetchComponent("/example") if name == "Alberto" else e.h3("You are not alberto")
-    ifconfig = FetchComponent("https://ifconfig.co/json")
-    web = e.html(
+    userspace = FetchComponent("/example",{'name': 'Alb'}) if name == "Alberto" else h3("You are not alberto")
+    ifconfig = FetchComponent("/health")
+    web = html(
         mincss,
-        e.head(e.script(js)),
-        e.body(
-            e.h1("Hello World around music"),
+        head(script(js)),
+        body(
+            h1("Hello World"),
             userspace,
             ifconfig,
-            e.button("click me").attr(onclick="alert('Hi')")
+            button("click me").attr(onclick="alert('Hi')")
         )
     )
     return web

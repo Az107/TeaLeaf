@@ -11,6 +11,12 @@ class Component:
         self.attributes["class"] = classes
         return self
 
+    def style(self, **attr):
+        styles = ""
+        for k in attr:
+            styles += f"{k}:{attr[k]};"
+        self.attributes["style"] = styles
+
     def attr(self, **attr):
         for k in attr:
             self.attributes[k] = attr[k]

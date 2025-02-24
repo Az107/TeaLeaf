@@ -11,7 +11,13 @@ class WSGI(Server):
     def wsgi_app(self, environ, start_response):
         path = environ.get('PATH_INFO', '/')
         method = environ.get('REQUEST_METHOD', 'GET')
-        request = HttpRequest(method,path)
+        headers = {}
+        try:
+            headers["content_length"] = int(environ.get("CONTENT_LENGTH", 0))  # Puede ser None o vacío
+        except ValueError:
+            headers["content_length"] = 0
+        body = environ.get('wsgi.input',"body")
+        request = HttpRequest(method,path,headers=headers,body=body)
         status, headers, body = self.handle_request(request)
         start_response(status, headers)
         return iter([b.encode('utf-8') for b in body])

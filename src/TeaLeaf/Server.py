@@ -9,7 +9,7 @@ class HttpRequest:
         path="/",
         args={},
         headers={},
-        body=""
+        body:str|bytes|None =None
     ):
         self.method=method
         self.path=path
@@ -17,8 +17,17 @@ class HttpRequest:
         self.headers=headers
         self.body=body
 
-    def json(self):
-        return json.loads(self.body)
+    def json(self) -> dict|None:
+        body = ""
+        if self.body is None:
+            return None
+        if hasattr(self.body,"read"):
+            body_buffer = self.body
+            body = body_buffer.read(self.headers["content_length"]).decode("utf-8")
+            body_buffer.close()
+        else:
+            body = self.body
+        return json.loads(body)
 
 
 
