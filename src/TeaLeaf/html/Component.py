@@ -1,6 +1,5 @@
 from typing import Union
 import uuid
-from warnings import catch_warnings
 
 def flatten(lst: list):
     return [item for sublist in lst for item in (sublist if isinstance(sublist, list) else [sublist])]

@@ -54,7 +54,6 @@ def user():
 
 @app.route("/example")
 def example(req: HttpRequest):
-    print(req.body)
     user = req.json()
     if user is None:
         name = ""

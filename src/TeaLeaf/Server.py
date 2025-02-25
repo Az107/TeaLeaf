@@ -1,4 +1,5 @@
 import re
+from  io import BytesIO
 import json
 import typing
 import inspect
@@ -23,7 +24,7 @@ class HttpRequest:
         path="/",
         args={},
         headers={},
-        body:str|bytes|None =None
+        body:str|bytes|BytesIO|None = None
     ):
         self.method=method
         self.path=path
@@ -33,17 +34,24 @@ class HttpRequest:
 
     def json(self) -> dict|None:
         body = ""
+        print("[python] body: " + str(self.body))
         if self.body is None:
+            print("no body")
             return None
-        if hasattr(self.body,"read"):
-            body_buffer = self.body
+        if type(self.body) == BytesIO:
+            body_buffer: BytesIO = self.body
             body = body_buffer.read(self.headers["content_length"]).decode("utf-8")
             body_buffer.close()
         else:
-            body = self.body
+            if type(self.body) == bytes:
+                body = self.body.decode()
+            else:
+                body: str  = str(self.body)
         try:
             return json.loads(body)
-        except:
+        except Exception as e:
+            print(e)
+            print(self.body)
             return None
 
 def match_path(routes: dict[str, typing.Callable], path: str) -> tuple[dict[str,str], typing.Callable] | None:
