@@ -7,3 +7,8 @@ src/.DS_Store
 .DS_Store
 .pyc
 *.pyc
+*.pyc
+*.pyc
+*.pyc
+src/TeaLeaf/html/__pycache__/Component.cpython-313.pyc
+/src/TeaLeaf/html/__pycache__
