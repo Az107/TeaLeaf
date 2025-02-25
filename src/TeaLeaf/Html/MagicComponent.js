@@ -1,5 +1,6 @@
 function fetchAndUpdate(url, config, elementId) {
   {
+    console.log(elementId);
     console.log({ config });
     config = JSON.parse(config);
     if (config.body) {

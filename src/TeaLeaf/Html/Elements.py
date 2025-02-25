@@ -36,27 +36,34 @@ class h3(Component, metaclass=ComponentMeta):
 class div(Component, metaclass=ComponentMeta):
     pass
 
-
-class divRow(Component):
-    def __init__(self, *childs):
-        super().__init__("div", *childs)
+    def row(self):
         self.attr(style="display: flex; flex-directoion: row")
-    pass
+        return self
 
-class divCol(Component):
-    def __init__(self, *childs):
-        super().__init__("div", *childs)
+    def column(self):
         self.attr(style="display: flex; flex-directoion: column")
-    pass
+        return self
 
 
 class button(Component, metaclass=ComponentMeta):
-    pass
+    def reactive(self,path,id):
+        import json
+        config = {"method": "GET"}
+        # Serializar la configuración en JSON para JS
+        config_js = json.dumps(config)
+        js = f"""fetchAndUpdate('{path}','{{}}','{id}')"""
+        self.attr(onclick=js)
+        return self
+
 
 
 class label(Component, metaclass=ComponentMeta):
     pass
 
+class checkbox(Component):
+    def __init__(self, *childs):
+        super().__init__("input", *childs)
+        self.attr(type="checkbox")
 
 class textInput(Component):
     def __init__(self, *childs):
