@@ -8,6 +8,8 @@ class html(Component, metaclass=ComponentMeta):
 class head(Component, metaclass=ComponentMeta):
     pass
 
+class header(Component, metaclass=ComponentMeta):
+    pass
 
 class script(Component, metaclass=ComponentMeta):
     pass
@@ -46,15 +48,7 @@ class div(Component, metaclass=ComponentMeta):
 
 
 class button(Component, metaclass=ComponentMeta):
-    def reactive(self,path,id):
-        import json
-        config = {"method": "GET"}
-        # Serializar la configuración en JSON para JS
-        config_js = json.dumps(config)
-        js = f"""fetchAndUpdate('{path}','{{}}','{id}')"""
-        self.attr(onclick=js)
-        return self
-
+    pass
 
 
 class label(Component, metaclass=ComponentMeta):
@@ -69,8 +63,19 @@ class textInput(Component):
     def __init__(self, *childs):
         super().__init__("input", *childs)
 
+class submit(Component):
+    def __init__(self, *childs):
+        super().__init__("input", *childs)
+        self.attr(type="submit")
 
 class form(Component):
-    def __init__(self, action: str, *childs):
+    def __init__(self, *childs):
         super().__init__("form", *childs)
+
+    def action(self, action):
         self.attr(action=action)
+        return self
+
+    def method(self, method):
+        self.attr(method=method)
+        return self

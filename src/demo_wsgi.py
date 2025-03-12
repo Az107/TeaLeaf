@@ -1,14 +1,16 @@
-
 from TeaLeaf.MagicFunction.Store import SuperStore, Store
 from TeaLeaf.Server import HttpRequest
 from TeaLeaf.WSGI import WSGI
-from TeaLeaf.Html.Elements import checkbox, html, div,textInput, button, h1,h3, head, body,script
-from TeaLeaf.Html.MagicComponent import FetchComponent
+from TeaLeaf.Html.Elements import header, checkbox,head, form, html, div,textInput, button, h1, submit, body,script
+from TeaLeaf.Html.MagicComponent import FetchComponent, rButton
+from TeaLeaf.utils import redirect, Dom
+
 
 
 app = WSGI()
 SuperStore(app)
 cstore = Store()
+cstore.create(id="todo",data=[])
 cstore.create(id="counter",data=1)
 print(cstore._id)
 
@@ -18,42 +20,66 @@ mincss = """<link rel="stylesheet" href="https://cdn.rawgit.com/Chalarangelo/min
 def health(req: HttpRequest):
     return {"status": "ok","method": req.method, "path": req.path, "body": str(req.json())}
 
-contador = 0
+
 @app.route("/api/contar")
-def contar_api():
-    global contador
-    contador+=1
-    return str(contador)
+def contar_api(session):
+    print(session)
+    if session.has("contador"):
+        session.contador+=1
+    else:
+        session.contador = 0
+    return str(session.contador)
 
 @app.route("/api/restar")
-def restar_api():
-    global contador
-    contador-=1
-    return str(contador)
-
+def restar_api(session):
+    if session.has("contador"):
+        session.contador-=1
+    else:
+        session.contador = 0
+    return str(session.contador)
 
 @app.route("/contar")
 def contar():
     contador = FetchComponent("/api/contar")
     return html(
         div(
-            button("-").reactive("/api/restar",contador.reid()),
+            rButton("-").reactive("/api/restar",contador),
             contador,
-            button("+").reactive("/api/contar",contador.reid())
+            rButton("+").reactive("/api/contar",contador)
         ).row()
     )
 
 
 @app.route("/hello/{name}")
 def saluda(req, name):
-    return f"Hello {name} here is your req body {req.body}"
+    return 202 ,[("potato-header","yay")],f"Hello {name} here is your req body {req.body}"
 
-@app.route("/user")
-def user():
-    return "no logged"
+
+def LoginPage():
+    return html(
+        mincss,
+        form(
+            textInput().id("userName").attr(name="userName"),
+            submit("Login")
+        ).action("/login").method("POST")
+    )
+
+
+@app.route("/login")
+def user(session, req: HttpRequest):
+    if session.has("name"):
+        return "Hello " + session.name
+    print(req.body)
+    user = req.form()
+    if user is None:
+        return LoginPage()
+    else:
+        session.name = user["userName"]
+        return 302, [("Location","/")], ""
+
 
 @app.route("/example")
-def example(req: HttpRequest):
+def userNav(req: HttpRequest):
     print(req.body)
     user = req.json()
     if user is None:
@@ -77,33 +103,35 @@ def elementoCompra(name):
     ).row()
 
 @app.route('/')
-def home():
+def home(session, req: HttpRequest):
+    if not session.has("name"):
+        return redirect("/login")
+
     js = """
         function magic_button(name) {
             alert("Hello " + name)
         }
     """
-    name = "Alberto"
-    userspace = FetchComponent("/example",{'name': 'Alb'}) if name == "Alberto" else h3("You are not alberto")
-    health = FetchComponent("/health")
-    lista_compra = ["huevos","patatas","pimientos"]
-
     web = html(
+        head(
         mincss,
         script(js),
+        script(cstore.do.js()),
+        ),
         body(
+            header(
+                h1("TeaLeaf!").style(color="green"),
+            ),
             div(
-                h1("Hello World!").style(color="red"),
-                userspace.style(border="solid 1px grey"),
-            ).row(),
-            contar(),
-            div(
-            [elementoCompra(c) for c in lista_compra]
-            ).style(padding="20px"),
-            div(
-                textInput(),
-                button("Add")
-            ).row()
+                contar(),
+                div(
+                [elementoCompra(c) for c in cstore.read("todo")]
+                ).style(padding="20px"),
+                div(
+                    textInput().id("item_compra"),
+                    button("Create").attr(onclick=cstore.do.Update("todo",Dom("#item_compra"))),
+                ).row()
+            ).classes(["row"])
         )
     )
     return web

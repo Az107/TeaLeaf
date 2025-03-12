@@ -1,4 +1,4 @@
-from TeaLeaf.Server import Server
+
 from TeaLeaf.Html.Component import Component
 from TeaLeaf.Html.JS import JS
 from TeaLeaf.Html.Elements import div, script
@@ -34,6 +34,27 @@ class FetchComponent(Component):
 
     def reid(self):
        return self._reid
+
+class rButton(Component):
+    def __init__(self, *childs):
+        super().__init__("button", *childs)
+
+    def reactive(self,path,component: FetchComponent):
+        #config = {"method": "GET"}
+        if not hasattr(component, "reid"):
+            raise Exception("component is not reactive")
+        id = component.reid()
+        # Serializar la configuración en JSON para JS
+        #config_js = json.dumps(config)
+        js = f"""fetchAndUpdate('{path}','{{}}','{id}')"""
+        self.attr(onclick=js)
+        return self
+
+    #def refresh(self, path)
+
+class HydratedComponent(Component):
+    def __init__(self, *childs):
+        pass
 
 
 class PoolComponent(Component):

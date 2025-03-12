@@ -8,7 +8,7 @@ from TeaLeaf.Html.Component import Component
 
 class CGI(Server):
     def __init__(self) -> None:
-        super().__init__();
+        super().__init__()
         input_data = sys.stdin.read()
 
         query_string = os.environ.get("QUERY_STRING", "")

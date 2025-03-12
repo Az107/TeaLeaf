@@ -1,6 +1,6 @@
 
 
-def JS(code: str, file: str|None=None, **kargs) -> str:
+def JS(code: str="", file: str|None=None, **kargs) -> str:
     _code = ""
     if file is not None:
         f = open(file, "r")
