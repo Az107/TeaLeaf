@@ -2,7 +2,7 @@ import json
 from uuid import uuid4
 from TeaLeaf.Server import HttpRequest, Server
 from TeaLeaf.Html.JS import JS
-import os
+# import os
 
 
 class SuperStore():
@@ -92,9 +92,14 @@ class Store():
 
 class JSDO():
     def __init__(self, store_id):
-        js_file = os.path.dirname(__file__) + "/Store.js"
+        # js_file = os.path.dirname(__file__) + "/Store.js"
         self.storeName = "store_" + str(uuid4())[:5]
-        self.storeJS = JS(file=js_file, code=f"const {self.storeName} = new Store('{store_id}')")
+        self.storeJS = JS(code=f"const {self.storeName} = new Store('{store_id}')")
+
+    def __format_js__(self, func_name: str,id, data):
+        if type(data) is dict:
+            data = json.dumps(data)
+        return f"""{self.storeName}.{func_name}("{id}",{data})""".replace("\"'","").replace("'\"","").replace("\"","'")
 
     def js(self):
         return self.storeJS
@@ -102,11 +107,9 @@ class JSDO():
     def Get(self, id):
         return f"{self.storeName}.get(`{id}`)"
 
+
     def Set(self, id, data):
-        return f"{self.storeName}.set(`{id}`,`{data}`)"
+        return self.__format_js__("set",id,data)
 
     def Update(self, id, data):
-        if type(data) is dict:
-            data = json.dumps(data)
-            data = '"{data}"'
-        return f"""{self.storeName}.update(`{id}`,{data})"""
+        return self.__format_js__("update",id,data)

@@ -39,25 +39,43 @@ class div(Component, metaclass=ComponentMeta):
     pass
 
     def row(self):
-        self.attr(style="display: flex; flex-directoion: row")
+        self.attr(style="display: flex; flex-direction: row")
         return self
 
     def column(self):
-        self.attr(style="display: flex; flex-directoion: column")
+        self.attr(style="display: flex; flex-direction: column")
         return self
 
 
 class button(Component, metaclass=ComponentMeta):
-    pass
+
+    def reactive(self,path,component_id):
+        """
+        Makes the button reactive by linking it to a FetchComponent.
+
+        :param path: The URL to fetch new data from when clicked.
+        :param component: The FetchComponent to be updated.
+        """
+
+        #config = {"method": "GET"}
+
+        # Serializar la configuración en JSON para JS
+        #config_js = json.dumps(config)
+        js = f"""fetchAndUpdate('{path}','{{}}','{component_id}')"""
+        self.attr(onclick=js)
+        return self
+
 
 
 class label(Component, metaclass=ComponentMeta):
     pass
 
 class checkbox(Component):
-    def __init__(self, *childs):
+    def __init__(self,checked = False, *childs):
         super().__init__("input", *childs)
         self.attr(type="checkbox")
+        if checked:
+            self.attr(checked="True")
 
 class textInput(Component):
     def __init__(self, *childs):

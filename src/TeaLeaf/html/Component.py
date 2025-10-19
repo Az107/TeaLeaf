@@ -1,92 +1,137 @@
 from typing import Union
 import uuid
-
-
-def flatten(lst: list):
-    return [item for sublist in lst for item in (sublist if isinstance(sublist, list) else [sublist])]
+from types import FunctionType
+import inspect
 
 class Component:
+    """
+    Represents an HTML component with attributes, children, and optional inline styles.
+    This class allows constructing HTML elements programmatically and managing CSS styles.
+    """
+
     def __init__(self, name, *childs: Union[str,list,'Component']) -> None:
+        """
+        Initializes a new Component instance.
+
+        :param name: The tag name of the HTML element.
+        :param childs: Optional children elements, which can be strings, lists, or other Component instances.
+        """
+
         self.styles: str | None = None
         self._id: str = "tl" + str(uuid.uuid4())
         self.name = name
-        self.childs: list[Component|str|list] = list(childs)
-
+        self.children: list[Component|str|list] = list(childs)
         self.attributes: dict[str, str] = dict()
 
-
     def id(self, id: str):
+        """
+                Sets the ID of the component and adds it as an attribute.
+
+                :param id: The ID to assign.
+                :return: The component instance (for method chaining).
+        """
+
         self._id = id
         return self.attr(id=id)
 
     def classes(self, classes):
+        """
+        Adds a CSS class attribute to the component.
+
+        :param classes: CSS class names (space-separated).
+        :return: The component instance (for method chaining).
+        """
+
         self.attributes["class"] = classes
         return self
 
     def style(self,path: str|None = None, **attr):
-        if self.styles is None:
-            self.styles = f"#{self._id} {{\n"
-        else:
-            self.styles = self.styles[:-1]
-        for k in attr:
-            self.styles += f"{k.replace("_","-")}: {attr[k]};"
-        self.styles += "}"
-        if path is not None:
-            f = open(path, "r")
-            self.styles += f.read()
-        return self
+        """
+        Adds inline styles to the component.
 
+        :param path: Optional path to an external CSS file.
+        :param attr: CSS properties to apply (e.g., color="red", margin="10px").
+        :return: The component instance (for method chaining).
+        """
+
+        self.styles = (self.styles or "") + f"#{self._id} {{\n"
+        self.styles += "\n".join(f"  {k.replace('_', '-')}: {v};" for k, v in attr.items())
+        self.styles += "\n}"
+
+        if path:
+            with open(path, "r") as f:
+                self.styles += f.read()
+        return self
 
     def attr(self, **attr):
+        """
+        Adds custom attributes to the component.
+
+        :param attr: Dictionary of attribute names and values.
+        :return: The component instance (for method chaining).
+        """
+
         for k in attr:
-            self.attributes[k] = attr[k]
+            if (type(attr[k]) is str):
+                self.attributes[k] = attr[k]
+            elif type(attr[k]) is FunctionType:
+                py_f = inspect.getsource(attr[k])
+                self.attributes[k] = f"""() => pyodide.runPython(`{py_f}`)"""
+
         return self
 
-    def append(self, child):
-        self.childs.append(child)
+    def append(self, child: Union[str, "Component", list]):
+        """
+        Appends a child element to the component.
+
+        :param child: A Component, string, or list of elements.
+        :return: The component instance (for method chaining).
+        """
+
+        self.children.append(child)
         return self
 
-    def __build_attr(self) -> str:
-        result = ""
-        for k in self.attributes:
-            result += f' {k}="{self.attributes[k]}"'
-        return result
+    def __build_attr__(self) -> str:
+        return "".join(f' {k}="{v}"' for k, v in self.attributes.items() if v is not None)
 
 
-    def __build_child__(self,childs: list):
-        result = ""
-        styles = ""
-        for child in childs:
-            if type(child) is str:
-                result += f"{child}"
-            elif type(child) is list:
+    def __build_child__(self,children: list):
+        html_parts = []
+        css_parts = []
+        for child in children:
+            if isinstance(child, str):
+                html_parts.append(f"{child}")
+            elif isinstance(child, list):
                 html,css = self.__build_child__(child)
-                result+= html
-                styles +=css
+                html_parts.append(html)
+                css_parts.append(css)
             elif isinstance(child, Component):
                 html,css = child.build()
-                if styles is not None:
-                    if styles != "":
-                        styles += "\n"
-                    styles += css
-                result += html
+                html_parts.append(html)
+                css_parts.append(css)
             else:
                 try:
-                    result += str(child)
+                    html_parts.append(str(child))
                 except Exception:
                     continue
-        return result,styles
+        return "".join(html_parts), "".join(filter(None, css_parts))
 
 
     def build(self) -> tuple[str,str]:
+        """
+        Builds the component's HTML and CSS separately.
+
+        :return: A tuple (HTML string, CSS string)
+        """
+
         if self.styles is not None and "id" not in self.attributes:
             self.attr(id=self._id)
-        if len(self.childs) == 0:
-            result = f"<{self.name}{self.__build_attr()}/>\n"
+        if len(self.children) == 0:
+            result = f"<{self.name}{self.__build_attr__()}/>\n"
         else:
-            endln = "\n" if len(self.childs) > 1 else ""
-            result = f"<{self.name}{self.__build_attr()}>{endln}"
-            html,styles = self.__build_child__(self.childs)
+            endln = "\n" if len(self.children) > 1 else ""
+            result = f"<{self.name}{self.__build_attr__()}>{endln}"
+            html,styles = self.__build_child__(self.children)
             result += html
             if self.styles is None:
                 self.styles = styles
@@ -97,15 +142,21 @@ class Component:
         return result,css
 
     def render(self) -> str:
-        if len(self.childs) == 0:
-            result = f"<{self.name}{self.__build_attr()}/>\n"
+        """
+        Builds and returns the full HTML including inline CSS inside a <style> tag.
+
+        :return: A complete HTML string with embedded CSS.
+        """
+
+        if len(self.children) == 0:
+            result = f"<{self.name}{self.__build_attr__()}/>\n"
         else:
-            inner_result,css = self.__build_child__(self.childs)
+            inner_result,css = self.__build_child__(self.children)
             if self.styles is None:
                 self.styles = css
             else:
                 self.styles += css
-            result = f"<{self.name}{self.__build_attr()}>\n"
+            result = f"<{self.name}{self.__build_attr__()}>\n"
             if self.styles is not None:
                 result += f"<style>{self.styles}</style>\n"
             result+=inner_result

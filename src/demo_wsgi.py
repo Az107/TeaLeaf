@@ -1,10 +1,10 @@
+from TeaLeaf.Html.JS import JS
 from TeaLeaf.MagicFunction.Store import SuperStore, Store
 from TeaLeaf.Server import HttpRequest
 from TeaLeaf.WSGI import WSGI
 from TeaLeaf.Html.Elements import header, checkbox,head, form, html, div,textInput, button, h1, submit, body,script
 from TeaLeaf.Html.MagicComponent import FetchComponent, rButton
 from TeaLeaf.utils import redirect, Dom
-
 
 
 app = WSGI()
@@ -15,7 +15,6 @@ cstore.create(id="counter",data=1)
 print(cstore._id)
 
 mincss = """<link rel="stylesheet" href="https://cdn.rawgit.com/Chalarangelo/mini.css/v3.0.1/dist/mini-default.min.css">"""
-
 @app.route("/health")
 def health(req: HttpRequest):
     return {"status": "ok","method": req.method, "path": req.path, "body": str(req.json())}
@@ -41,6 +40,11 @@ def restar_api(session):
 @app.route("/contar")
 def contar():
     contador = FetchComponent("/api/contar")
+    def test():
+        a = 0
+        a+=1
+        return a
+
     return html(
         div(
             rButton("-").reactive("/api/restar",contador),
@@ -67,15 +71,16 @@ def LoginPage():
 
 @app.route("/login")
 def user(session, req: HttpRequest):
+
     if session.has("name"):
         return "Hello " + session.name
     print(req.body)
     user = req.form()
-    if user is None:
+    if user is None or not "userName" in user:
         return LoginPage()
     else:
         session.name = user["userName"]
-        return 302, [("Location","/")], ""
+        return redirect("/")
 
 
 @app.route("/example")
@@ -96,10 +101,11 @@ def userNav(req: HttpRequest):
     return userCard
 
 
-def elementoCompra(name):
+def elementoCompra(task):
+    print(task)
     return div(
-        checkbox(),
-        name
+        checkbox(checked=task["done"]).attr(onchange=cstore.do.Update("todo",{"done": not task["done"], "value": task["value"]})),
+        task["value"]
     ).row()
 
 @app.route('/')
@@ -107,16 +113,17 @@ def home(session, req: HttpRequest):
     if not session.has("name"):
         return redirect("/login")
 
-    js = """
-        function magic_button(name) {
-            alert("Hello " + name)
-        }
-    """
+
     web = html(
         head(
-        mincss,
-        script(js),
-        script(cstore.do.js()),
+            mincss,
+            """<script src='_engine/worker.js'></script>""",
+            script("""
+                function magic_button(name) {
+                    alert("Hello " + name)
+                }
+            """),
+            script(cstore.do.js()),
         ),
         body(
             header(
@@ -129,7 +136,7 @@ def home(session, req: HttpRequest):
                 ).style(padding="20px"),
                 div(
                     textInput().id("item_compra"),
-                    button("Create").attr(onclick=cstore.do.Update("todo",Dom("#item_compra"))),
+                    button("Create").attr(onclick=cstore.do.Update("todo",{"done": False, "value": Dom("#item_compra")})),
                 ).row()
             ).classes(["row"])
         )
