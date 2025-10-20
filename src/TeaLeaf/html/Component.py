@@ -1,7 +1,8 @@
-from typing import Union
+from typing import List, Union, Any
 import uuid
 from types import FunctionType
 import inspect
+
 
 class Component:
     """
@@ -9,7 +10,7 @@ class Component:
     This class allows constructing HTML elements programmatically and managing CSS styles.
     """
 
-    def __init__(self, name, *childs: Union[str,list,'Component']) -> None:
+    def __init__(self, name, *childs: Union[str, List[Any], "Component"]) -> None:
         """
         Initializes a new Component instance.
 
@@ -20,15 +21,15 @@ class Component:
         self.styles: str | None = None
         self._id: str = "tl" + str(uuid.uuid4())
         self.name = name
-        self.children: list[Component|str|list] = list(childs)
+        self.children: list[Component | str | list] = list(childs)
         self.attributes: dict[str, str] = dict()
 
     def id(self, id: str):
         """
-                Sets the ID of the component and adds it as an attribute.
+        Sets the ID of the component and adds it as an attribute.
 
-                :param id: The ID to assign.
-                :return: The component instance (for method chaining).
+        :param id: The ID to assign.
+        :return: The component instance (for method chaining).
         """
 
         self._id = id
@@ -45,7 +46,7 @@ class Component:
         self.attributes["class"] = classes
         return self
 
-    def style(self,path: str|None = None, **attr):
+    def style(self, path: str | None = None, **attr):
         """
         Adds inline styles to the component.
 
@@ -55,7 +56,9 @@ class Component:
         """
 
         self.styles = (self.styles or "") + f"#{self._id} {{\n"
-        self.styles += "\n".join(f"  {k.replace('_', '-')}: {v};" for k, v in attr.items())
+        self.styles += "\n".join(
+            f"  {k.replace('_', '-')}: {v};" for k, v in attr.items()
+        )
         self.styles += "\n}"
 
         if path:
@@ -72,7 +75,7 @@ class Component:
         """
 
         for k in attr:
-            if (type(attr[k]) is str):
+            if type(attr[k]) is str:
                 self.attributes[k] = attr[k]
             elif type(attr[k]) is FunctionType:
                 py_f = inspect.getsource(attr[k])
@@ -92,21 +95,22 @@ class Component:
         return self
 
     def __build_attr__(self) -> str:
-        return "".join(f' {k}="{v}"' for k, v in self.attributes.items() if v is not None)
+        return "".join(
+            f' {k}="{v}"' for k, v in self.attributes.items() if v is not None
+        )
 
-
-    def __build_child__(self,children: list):
+    def __build_child__(self, children: list):
         html_parts = []
         css_parts = []
         for child in children:
             if isinstance(child, str):
                 html_parts.append(f"{child}")
             elif isinstance(child, list):
-                html,css = self.__build_child__(child)
+                html, css = self.__build_child__(child)
                 html_parts.append(html)
                 css_parts.append(css)
             elif isinstance(child, Component):
-                html,css = child.build()
+                html, css = child.build()
                 html_parts.append(html)
                 css_parts.append(css)
             else:
@@ -116,8 +120,7 @@ class Component:
                     continue
         return "".join(html_parts), "".join(filter(None, css_parts))
 
-
-    def build(self) -> tuple[str,str]:
+    def build(self) -> tuple[str, str]:
         """
         Builds the component's HTML and CSS separately.
 
@@ -131,15 +134,15 @@ class Component:
         else:
             endln = "\n" if len(self.children) > 1 else ""
             result = f"<{self.name}{self.__build_attr__()}>{endln}"
-            html,styles = self.__build_child__(self.children)
+            html, styles = self.__build_child__(self.children)
             result += html
             if self.styles is None:
                 self.styles = styles
             else:
-                self.styles+=styles
+                self.styles += styles
             result += f"\t</{self.name}>\n"
         css: str = "" if self.styles is None else self.styles
-        return result,css
+        return result, css
 
     def render(self) -> str:
         """
@@ -151,7 +154,7 @@ class Component:
         if len(self.children) == 0:
             result = f"<{self.name}{self.__build_attr__()}/>\n"
         else:
-            inner_result,css = self.__build_child__(self.children)
+            inner_result, css = self.__build_child__(self.children)
             if self.styles is None:
                 self.styles = css
             else:
@@ -159,20 +162,19 @@ class Component:
             result = f"<{self.name}{self.__build_attr__()}>\n"
             if self.styles is not None:
                 result += f"<style>{self.styles}</style>\n"
-            result+=inner_result
+            result += inner_result
             result += f"</{self.name}>\n"
 
         return result
-
-
 
 
 class ComponentMeta(type):
     def __new__(cls, name, bases, dct):
         # Creamos una clase personalizada para cada componente HTML
         if name not in ("Component", "ComponentMeta"):
+
             def init(self, *childs):
                 super(self.__class__, self).__init__(name, *childs)
 
-            dct['__init__'] = init
+            dct["__init__"] = init
         return super().__new__(cls, name, bases, dct)

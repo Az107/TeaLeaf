@@ -5,7 +5,7 @@ from TeaLeaf.Html.JS import JS
 # import os
 
 
-class SuperStore():
+class SuperStore:
     _instance = None
     _initialized = False
 
@@ -14,20 +14,20 @@ class SuperStore():
             cls._instance = super(SuperStore, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self, server: Server|None =None):
+    def __init__(self, server: Server | None = None):
         if not self._initialized:
-            self.api_list: dict[str, 'Store'] = {}
+            self.api_list: dict[str, "Store"] = {}
             self._initialized = True
             self.server = server
             if self.server:
-                self.server.add_path("/api/_store/{api_id}/{id}",self.process)
-                self.server.add_path("/api/_store/{api_id}",self.process)
+                self.server.add_path("/api/_store/{api_id}/{id}", self.process)
+                self.server.add_path("/api/_store/{api_id}", self.process)
             self._initialized = True
 
     def len(self):
         return len(self.api_list)
 
-    def add(self, id, store: 'Store'):
+    def add(self, id, store: "Store"):
         self.api_list[id] = store
 
     def process(self, req: HttpRequest, api_id, id=None):
@@ -45,18 +45,17 @@ class SuperStore():
         elif req.method == "DELETE":
             return store.delete(id)
         elif req.method == "PATCH":
-            return store.update(id,req.json() or req.body)
+            return store.update(id, req.json() or req.body)
         else:
             return "404 Not Found", "Not found"
 
 
-class Store():
+class Store:
     def __init__(self) -> None:
         self._id = str(uuid4())
         self.data = {}
         self.do = JSDO(self._id)
-        SuperStore().add(self._id,self)
-
+        SuperStore().add(self._id, self)
 
     def delete(self, id):
         if id in self.data:
@@ -70,36 +69,39 @@ class Store():
             result.append(self.data[k])
         return json.dumps(result)
 
-    def update(self,id,data):
+    def update(self, id, data):
         if id in self.data:
             if type(self.data[id]) is list:
-                    self.data[id].append(data)
+                self.data[id].append(data)
             else:
                 self.data[id] = data
 
         return data
 
-    def read(self,id):
+    def read(self, id):
         return self.data.get(id, "Key not found")
 
-    def create(self,data,id=None):
+    def create(self, data, id=None):
         if id is None:
             id = str(uuid4())
         self.data[id] = data
         return id
 
 
-
-class JSDO():
+class JSDO:
     def __init__(self, store_id):
         # js_file = os.path.dirname(__file__) + "/Store.js"
         self.storeName = "store_" + str(uuid4())[:5]
         self.storeJS = JS(code=f"const {self.storeName} = new Store('{store_id}')")
 
-    def __format_js__(self, func_name: str,id, data):
+    def __format_js__(self, func_name: str, id, data):
         if type(data) is dict:
             data = json.dumps(data)
-        return f"""{self.storeName}.{func_name}("{id}",{data})""".replace("\"'","").replace("'\"","").replace("\"","'")
+        return (
+            f"""{self.storeName}.{func_name}("{id}",{data})""".replace("\"'", "")
+            .replace("'\"", "")
+            .replace('"', "'")
+        )
 
     def js(self):
         return self.storeJS
@@ -107,9 +109,8 @@ class JSDO():
     def Get(self, id):
         return f"{self.storeName}.get(`{id}`)"
 
-
     def Set(self, id, data):
-        return self.__format_js__("set",id,data)
+        return self.__format_js__("set", id, data)
 
     def Update(self, id, data):
-        return self.__format_js__("update",id,data)
+        return self.__format_js__("update", id, data)
