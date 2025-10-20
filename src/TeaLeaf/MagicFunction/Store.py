@@ -1,4 +1,5 @@
 import json
+from typing import Dict
 from uuid import uuid4
 from TeaLeaf.Server import HttpRequest, Server
 from TeaLeaf.Html.JS import JS
@@ -41,7 +42,7 @@ class SuperStore:
             else:
                 return store.list()
         elif req.method == "POST":
-            return store.create(req.json() or req.body)
+            return store.create(req.json() or req.body, id)
         elif req.method == "DELETE":
             return store.delete(id)
         elif req.method == "PATCH":
@@ -70,11 +71,22 @@ class Store:
         return json.dumps(result)
 
     def update(self, id, data):
-        if id in self.data:
-            if type(self.data[id]) is list:
-                self.data[id].append(data)
-            else:
-                self.data[id] = data
+        if id not in self.data:
+            return None
+        col = self.data[id]
+        if type(col) is list:
+                if type(data) is dict and "id" in data:
+                    for idx,item in enumerate(col):
+                        if item["id"] == data["id"]:
+                            col[idx] = data
+                else:
+                    return None
+
+        else:
+            print(f"COL type: {type(col)}")
+            self.data[id] += data
+
+
 
         return data
 
@@ -84,7 +96,15 @@ class Store:
     def create(self, data, id=None):
         if id is None:
             id = str(uuid4())
-        self.data[id] = data
+
+        if id in self.data and type(self.data[id]) is list:
+            print(type(data))
+            if type(data) is dict:
+                data["id"] = data.get("id") or str(uuid4())
+
+            self.data[id].append(data)
+        else:
+            self.data[id] = data
         return id
 
 
@@ -97,8 +117,9 @@ class JSDO:
     def __format_js__(self, func_name: str, id, data):
         if type(data) is dict:
             data = json.dumps(data)
+        base_js = f"""{self.storeName}.{func_name}("{id}",{data})"""
         return (
-            f"""{self.storeName}.{func_name}("{id}",{data})""".replace("\"'", "")
+            base_js.replace("\"'", "")
             .replace("'\"", "")
             .replace('"', "'")
         )
@@ -112,5 +133,5 @@ class JSDO:
     def Set(self, id, data):
         return self.__format_js__("set", id, data)
 
-    def Update(self, id, data):
+    def Update(self, id, data, item_id = None):
         return self.__format_js__("update", id, data)

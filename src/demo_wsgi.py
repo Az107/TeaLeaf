@@ -68,13 +68,12 @@ def contar():
         a += 1
         return a
 
-    return html(
-        div(
+    return div(
             rButton("-").reactive("/api/restar", contador),
             contador,
             rButton("+").reactive("/api/contar", contador),
         ).row()
-    )
+
 
 
 @app.route("/hello/{name}")
@@ -132,7 +131,7 @@ def elementoCompra(task):
     return div(
         checkbox(checked=task["done"]).attr(
             onchange=cstore.do.Update(
-                "todo", {"done": not task["done"], "value": task["value"]}
+                "todo", {"done": not task["done"], "value": task["value"], "id": task["id"]}
             )
         ),
         task["value"],
@@ -167,7 +166,7 @@ def home(session, req: HttpRequest):
                 div(
                     textInput().id("item_compra"),
                     button("Create").attr(
-                        onclick=cstore.do.Update(
+                        onclick=cstore.do.Set(
                             "todo", {"done": False, "value": Dom("#item_compra")}
                         )
                     ),
