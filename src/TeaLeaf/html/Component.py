@@ -22,7 +22,7 @@ class Component:
         self._id: str = "tl" + str(uuid.uuid4())
         self.name = name
         self.children: list[Component | str | list] = list(childs)
-        self.attributes: dict[str, str] = dict()
+        self.attributes: dict[str, str | None] = dict()
 
     def id(self, id: str):
         """
@@ -66,13 +66,16 @@ class Component:
                 self.styles += f.read()
         return self
 
-    def attr(self, **attr):
+    def attr(self,*args, **attr):
         """
         Adds custom attributes to the component.
 
         :param attr: Dictionary of attribute names and values.
         :return: The component instance (for method chaining).
         """
+
+        for arg in args:
+            self.attributes[arg] = None
 
         for k in attr:
             if type(attr[k]) is str:
@@ -96,7 +99,7 @@ class Component:
 
     def __build_attr__(self) -> str:
         return "".join(
-            f' {k}="{v}"' for k, v in self.attributes.items() if v is not None
+            f" {k}='{v}'" if v is not None else f" {k}" for k, v in self.attributes.items()
         )
 
     def __build_child__(self, children: list):

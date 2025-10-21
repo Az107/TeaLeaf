@@ -1,5 +1,5 @@
 from TeaLeaf.Html.Component import Component, ComponentMeta
-
+from typing import Union, List, Any
 
 class html(Component, metaclass=ComponentMeta):
     pass
@@ -11,8 +11,12 @@ class head(Component, metaclass=ComponentMeta):
 class header(Component, metaclass=ComponentMeta):
     pass
 
-class script(Component, metaclass=ComponentMeta):
-    pass
+class script(Component):
+    def __init__(self, *childs: Union[str, List[Any], "Component"] ,src=None) -> None:
+        super().__init__("script", *childs)
+        if src != None:
+            self.attr(src=src)
+            self.children = [""]
 
 
 class style(Component, metaclass=ComponentMeta):

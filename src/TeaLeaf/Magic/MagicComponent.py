@@ -27,9 +27,11 @@ class FetchComponent(Component):
         # Configuración de la petición
         config = {"method": "POST" if body is not None else "GET", "body": body }
         # Serializar la configuración en JSON para JS
-        config_js = json.dumps(config)
         js_file = os.path.dirname(__file__) + "/MagicComponent.js"
-        js = JS(f"fetchAndUpdate('{url}','{config_js}','{placeholder._id}')",
+        url = json.dumps(url)
+        config_js = json.dumps(config)
+        id = json.dumps(placeholder._id)
+        js = JS(f"fetchAndUpdate({url},{config_js},{placeholder._id})",
             file=js_file)
         self.append(script(js))
 

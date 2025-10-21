@@ -1,8 +1,8 @@
 import json
-from typing import Dict
 from uuid import uuid4
-from TeaLeaf.Server import HttpRequest, Server
-from TeaLeaf.Html.JS import JS
+from TeaLeaf.Html.Elements import div
+from TeaLeaf.Server.Server import HttpRequest, Server
+from TeaLeaf.Magic.Common import JSDO
 # import os
 
 
@@ -55,7 +55,7 @@ class Store:
     def __init__(self) -> None:
         self._id = str(uuid4())
         self.data = {}
-        self.do = JSDO(self._id)
+        self.do = JSDO("Store", self._id)
         SuperStore().add(self._id, self)
 
     def delete(self, id):
@@ -85,13 +85,14 @@ class Store:
         else:
             print(f"COL type: {type(col)}")
             self.data[id] += data
-
-
-
-        return data
+        return str(data)
 
     def read(self, id):
         return self.data.get(id, "Key not found")
+
+
+    def react(self,id):
+        return div(self.read(id)).classes(f"{self._id}{id}_react")
 
     def create(self, data, id=None):
         if id is None:
@@ -105,33 +106,4 @@ class Store:
             self.data[id].append(data)
         else:
             self.data[id] = data
-        return id
-
-
-class JSDO:
-    def __init__(self, store_id):
-        # js_file = os.path.dirname(__file__) + "/Store.js"
-        self.storeName = "store_" + str(uuid4())[:5]
-        self.storeJS = JS(code=f"const {self.storeName} = new Store('{store_id}')")
-
-    def __format_js__(self, func_name: str, id, data):
-        if type(data) is dict:
-            data = json.dumps(data)
-        base_js = f"""{self.storeName}.{func_name}("{id}",{data})"""
-        return (
-            base_js.replace("\"'", "")
-            .replace("'\"", "")
-            .replace('"', "'")
-        )
-
-    def js(self):
-        return self.storeJS
-
-    def Get(self, id):
-        return f"{self.storeName}.get(`{id}`)"
-
-    def Set(self, id, data):
-        return self.__format_js__("set", id, data)
-
-    def Update(self, id, data, item_id = None):
-        return self.__format_js__("update", id, data)
+        return self.data[id]

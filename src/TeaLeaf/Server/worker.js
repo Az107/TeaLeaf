@@ -1,3 +1,21 @@
+class LocalState {
+  constructor(init_val) {
+    this.val = init_val;
+  }
+
+  set(data) {
+    this.val = data;
+  }
+
+  update(data) {
+    this.val = data;
+  }
+
+  get() {
+    return this.val;
+  }
+}
+
 class Store {
   constructor(store_id) {
     this.store_id = store_id;
@@ -16,7 +34,15 @@ class Store {
       config.body = typeof body == "string" ? body : JSON.stringify(body);
     }
     let result = await fetch(url, config);
-    await fetch_front();
+    if (result.ok) {
+      const content = await result.text();
+      for (let item of document.getElementsByClassName(
+        this.store_id + id + "_react",
+      )) {
+        item.innerText = content;
+      }
+      fetch_front();
+    }
     return result;
   }
   async suscribe(callback) {}
@@ -46,7 +72,7 @@ function authority_zero(a, b) {
     return;
   }
   for (const [vdom, dom] of zip(a.children, b.children)) {
-    if (vdom.id.startsWith("tlmg")) continue;
+    //if (vdom.id.startsWith("tlmg")) continue;
     if (vdom.innerHTML == dom.innerHTML) continue;
     if (vdom.children.length == 0) {
       dom.innerHTML = vdom.innerHTML;
@@ -71,45 +97,5 @@ function* zip(a, b) {
 
   for (let i = 0; i < len; i++) {
     yield [a[i], b[i]];
-  }
-}
-
-/**
- * Returns a hash code from a string
- * @param  {String} str The string to hash.
- * @return {Number}    A 32bit integer
- * @see http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
- */
-function hashCode(str) {
-  let hash = 0;
-  for (let i = 0, len = str.length; i < len; i++) {
-    let chr = str.charCodeAt(i);
-    hash = (hash << 5) - hash + chr;
-    hash |= 0; // Convert to 32bit integer
-  }
-  return hash;
-}
-
-function fetchAndUpdate(url, config, elementId) {
-  {
-    console.log(elementId);
-    console.log({ config });
-    config = JSON.parse(config);
-    if (config.headers == undefined) {
-      config.headers = {};
-    }
-    if (config.body) {
-      config.body = JSON.stringify(config.body);
-      config.headers["Content-Type"] = "application/json";
-    }
-    console.log({ config });
-    fetch(url, config)
-      .then((response) => response.text())
-      .then((text) => (document.getElementById(elementId).innerHTML = text))
-      .catch((err) => {
-        {
-          console.log({ err });
-        }
-      });
   }
 }

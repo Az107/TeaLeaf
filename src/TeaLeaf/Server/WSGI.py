@@ -1,5 +1,5 @@
 
-from TeaLeaf.Server import HttpRequest, Server
+from TeaLeaf.Server.Server import HttpRequest, Server
 
 from TeaLeaf.Html.Component import Component
 

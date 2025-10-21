@@ -1,7 +1,8 @@
 from TeaLeaf.Html.JS import JS
-from TeaLeaf.MagicFunction.Store import SuperStore, Store
-from TeaLeaf.Server import HttpRequest
-from TeaLeaf.WSGI import WSGI
+from TeaLeaf.Magic.Store import SuperStore, Store
+from TeaLeaf.Magic.LocalState import use_state
+from TeaLeaf.Server.Server import HttpRequest
+from TeaLeaf.Server.WSGI import WSGI
 from TeaLeaf.Html.Elements import (
     header,
     checkbox,
@@ -12,11 +13,12 @@ from TeaLeaf.Html.Elements import (
     textInput,
     button,
     h1,
+    h3,
     submit,
     body,
     script,
 )
-from TeaLeaf.Html.MagicComponent import FetchComponent, rButton
+from TeaLeaf.Magic.MagicComponent import FetchComponent, rButton
 from TeaLeaf.utils import redirect, Dom
 
 
@@ -40,38 +42,14 @@ def health(req: HttpRequest):
     }
 
 
-@app.route("/api/contar")
-def contar_api(session):
-    print(session)
-    if session.has("contador"):
-        session.contador += 1
-    else:
-        session.contador = 0
-    return str(session.contador)
-
-
-@app.route("/api/restar")
-def restar_api(session):
-    if session.has("contador"):
-        session.contador -= 1
-    else:
-        session.contador = 0
-    return str(session.contador)
-
 
 @app.route("/contar")
 def contar():
-    contador = FetchComponent("/api/contar")
-
-    def test():
-        a = 0
-        a += 1
-        return a
 
     return div(
-            rButton("-").reactive("/api/restar", contador),
-            contador,
-            rButton("+").reactive("/api/contar", contador),
+            rButton("-").attr(onclick=cstore.do.update("counter",-1)),
+            h3( cstore.react("counter")),
+            rButton("+").attr(onclick=cstore.do.update("counter", 1)),
         ).row()
 
 
@@ -130,7 +108,7 @@ def elementoCompra(task):
     print(task)
     return div(
         checkbox(checked=task["done"]).attr(
-            onchange=cstore.do.Update(
+            onchange=cstore.do.update(
                 "todo", {"done": not task["done"], "value": task["value"], "id": task["id"]}
             )
         ),
@@ -140,39 +118,43 @@ def elementoCompra(task):
 
 @app.route("/")
 def home(session, req: HttpRequest):
-    print(session)
     if not session.has("name"):
-        return redirect("/login")
+        # return redirect("/login")
+        session["name"] = "Alb"
+
+    modal_state = use_state(True)
 
     web = html(
         head(
             mincss,
-            """<script src='_engine/worker.js'></script>""",
-
-            script(cstore.do.js()),
+            script("", src="_engine/worker.js"),
         ),
         body(
             header(
                 div(
                     h1("TeaLeaf!").style(color="green"),
-                    h1(f"Welcome {session["name"]}"),
+                    button(f"Welcome {session["name"]}").attr(onclick=modal_state.set(False)),
                 ).row()
             ),
+            div("Esto es modal").classes("card").row().attr(hidden=modal_state.get()),
             div(
                 contar(),
+
                 div([elementoCompra(c) for c in cstore.read("todo")]).style(
                     padding="20px"
                 ),
                 div(
                     textInput().id("item_compra"),
                     button("Create").attr(
-                        onclick=cstore.do.Set(
+                        onclick=cstore.do.set(
                             "todo", {"done": False, "value": Dom("#item_compra")}
                         )
                     ),
                 ).row(),
             ).classes(["row"]),
         ),
+        modal_state.js(),
+        cstore.do.js(),
     )
     return web
 
