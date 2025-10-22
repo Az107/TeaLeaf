@@ -52,6 +52,7 @@ class Session(dict):
         """Checks if a session attribute exists."""
         return self.get(attr) is not None
 
+
     def __getattr__(self, attr):
         try:
             return self[attr]  # Acceder como diccionario
@@ -88,6 +89,7 @@ class HttpRequest:
     def __body_to_text__(self) -> str  | None:
         if "content_length" not in self.headers:
             return None
+
 
         body_size = int(self.headers.get("content_length") or 0)
         if body_size == 0:

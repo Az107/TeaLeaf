@@ -4,6 +4,8 @@ from types import FunctionType
 import inspect
 
 
+
+
 class Component:
     """
     Represents an HTML component with attributes, children, and optional inline styles.
@@ -78,11 +80,11 @@ class Component:
             self.attributes[arg] = None
 
         for k in attr:
-            if type(attr[k]) is str:
-                self.attributes[k] = attr[k]
-            elif type(attr[k]) is FunctionType:
-                py_f = inspect.getsource(attr[k])
-                self.attributes[k] = f"""() => pyodide.runPython(`{py_f}`)"""
+            # if type(attr[k]) is str:
+            self.attributes[k] = str(attr[k])
+            # elif type(attr[k]) is FunctionType:
+            #     py_f = inspect.getsource(attr[k])
+            #     self.attributes[k] = f"""() => pyodide.runPython(`{py_f}`)"""
 
         return self
 
@@ -98,8 +100,8 @@ class Component:
         return self
 
     def __build_attr__(self) -> str:
-        return "".join(
-            f" {k}='{v}'" if v is not None else f" {k}" for k, v in self.attributes.items()
+        return " " + " ".join(
+            f"{k}='{v}'" if v is not None else f"{k}" for k, v in self.attributes.items()
         )
 
     def __build_child__(self, children: list):

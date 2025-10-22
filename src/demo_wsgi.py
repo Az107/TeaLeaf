@@ -19,7 +19,8 @@ from TeaLeaf.Html.Elements import (
     script,
 )
 from TeaLeaf.Magic.MagicComponent import FetchComponent, rButton
-from TeaLeaf.utils import redirect, Dom
+from TeaLeaf.utils import redirect
+from TeaLeaf.Magic.Common import Not, Dom
 
 
 app = WSGI()
@@ -74,13 +75,15 @@ def LoginPage():
 
 @app.route("/login")
 def user(session, req: HttpRequest):
-    if session.has("name"):
-        return "Hello " + session.name
+    if session.has("userName"):
+        return "Hello " + session.userName
+    print(req.body)
     user = req.form()
+    print(user)
     if user is None or not "userName" in user:
-        return LoginPage()
+        return "401 unauthorized", LoginPage()
     else:
-        session.name = user["userName"]
+        session.userName = user["userName"]
         return redirect("/")
 
 
@@ -118,9 +121,8 @@ def elementoCompra(task):
 
 @app.route("/")
 def home(session, req: HttpRequest):
-    if not session.has("name"):
-        # return redirect("/login")
-        session["name"] = "Alb"
+    if not session.has("userName"):
+        return redirect("/login")
 
     modal_state = use_state(True)
 
@@ -133,13 +135,12 @@ def home(session, req: HttpRequest):
             header(
                 div(
                     h1("TeaLeaf!").style(color="green"),
-                    button(f"Welcome {session["name"]}").attr(onclick=modal_state.set(False)),
+                    button(f"Welcome {session["userName"]}").attr(onclick=modal_state.set(Not(modal_state.get()))),
                 ).row()
             ),
             div("Esto es modal").classes("card").row().attr(hidden=modal_state.get()),
             div(
                 contar(),
-
                 div([elementoCompra(c) for c in cstore.read("todo")]).style(
                     padding="20px"
                 ),
@@ -151,7 +152,7 @@ def home(session, req: HttpRequest):
                         )
                     ),
                 ).row(),
-            ).classes(["row"]),
+            )
         ),
         modal_state.js(),
         cstore.do.js(),
