@@ -164,6 +164,7 @@ class Component:
                 self.styles = css
             else:
                 self.styles += css
+                self.styles += "\n"
             result = f"<{self.name}{self.__build_attr__()}>\n"
             if self.styles is not None:
                 result += f"<style>{self.styles}</style>\n"

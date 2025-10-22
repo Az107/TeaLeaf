@@ -15,8 +15,8 @@ class JSCode():
     def __repr__(self):
         return self.raw
 
-     def __add__(self, other):
-            return JSCode(f"({self.raw} + {other})")
+    def __add__(self, other):
+        return JSCode(f"({self.raw} + {other})")
 
     def __sub__(self, other):
         return JSCode(f"({self.raw} - {other})")

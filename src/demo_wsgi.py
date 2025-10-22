@@ -13,6 +13,7 @@ from TeaLeaf.Html.Elements import (
     textInput,
     button,
     h1,
+    h2,
     h3,
     submit,
     body,
@@ -115,8 +116,9 @@ def elementoCompra(task):
                 "todo", {"done": not task["done"], "value": task["value"], "id": task["id"]}
             )
         ),
-        task["value"],
-    ).row()
+        h2(task["value"]),
+        button("x").classes("secondary")
+    ).row().classes("card")
 
 
 @app.route("/")
@@ -142,7 +144,9 @@ def home(session, req: HttpRequest):
             div(
                 contar(),
                 div([elementoCompra(c) for c in cstore.read("todo")]).style(
-                    padding="20px"
+                    padding="20px",
+                    height="200px",
+                    overflow_y="scroll"
                 ),
                 div(
                     textInput().id("item_compra"),
