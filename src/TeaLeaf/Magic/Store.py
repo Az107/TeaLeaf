@@ -1,7 +1,8 @@
 import json
 from uuid import uuid4
+from TeaLeaf.Html.Component import Component
 from TeaLeaf.Html.Elements import div
-from TeaLeaf.Server.Server import HttpRequest, Server
+from TeaLeaf.Server.Server import HttpRequest, Server, Session
 from TeaLeaf.Magic.Common import JSDO
 # import os
 
@@ -31,7 +32,7 @@ class SuperStore:
     def add(self, id, store: "Store"):
         self.api_list[id] = store
 
-    def process(self, req: HttpRequest, api_id, id=None):
+    def process(self,session: Session, req: HttpRequest, api_id, id=None):
         store = self.api_list.get(api_id)
         if store is None:
             return "Not found :C"
@@ -83,15 +84,14 @@ class Store:
                     return None
 
         else:
-            print(f"COL type: {type(col)}")
             self.data[id] += data
         return str(data)
 
-    def read(self, id):
+    def read(self, id: str) -> Any:
         return self.data.get(id, "Key not found")
 
 
-    def react(self,id):
+    def react(self,id) -> Component:
         return div(self.read(id)).classes(f"{self._id}{id}_react")
 
     def create(self, data, id=None):

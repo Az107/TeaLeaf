@@ -11,12 +11,17 @@ class head(Component, metaclass=ComponentMeta):
 class header(Component, metaclass=ComponentMeta):
     pass
 
+class link(Component, metaclass=ComponentMeta):
+    pass
+
 class script(Component):
     def __init__(self, *childs: Union[str, List[Any], "Component"] ,src=None) -> None:
         super().__init__("script", *childs)
+        self.unsafe = True
         if src != None:
             self.attr(src=src)
             self.children = [""]
+
 
 
 class style(Component, metaclass=ComponentMeta):

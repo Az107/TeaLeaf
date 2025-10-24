@@ -2,7 +2,7 @@ from typing import List, Union, Any
 import uuid
 from types import FunctionType
 import inspect
-
+import html as html_tools
 
 
 
@@ -19,7 +19,7 @@ class Component:
         :param name: The tag name of the HTML element.
         :param childs: Optional children elements, which can be strings, lists, or other Component instances.
         """
-
+        self.unsafe = False
         self.styles: str | None = None
         self._id: str = "tl" + str(uuid.uuid4())
         self.name = name
@@ -109,7 +109,10 @@ class Component:
         css_parts = []
         for child in children:
             if isinstance(child, str):
-                html_parts.append(f"{child}")
+                if self.unsafe:
+                    html_parts.append(child)
+                else:
+                    html_parts.append(html_tools.escape(str(child), quote=True))
             elif isinstance(child, list):
                 html, css = self.__build_child__(child)
                 html_parts.append(html)

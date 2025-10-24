@@ -9,3 +9,10 @@ dependencies = [
     "pyrefly>=0.37.0",
     "uvicorn>=0.34.0",
 ]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+"TeaLeaf.Server" = ['*.js']

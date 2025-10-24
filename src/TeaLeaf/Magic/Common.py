@@ -15,6 +15,12 @@ class JSCode():
     def __repr__(self):
         return self.raw
 
+    def __invert__(self):
+        return JSCode(f"!{self.raw}")
+
+    def __getattr__(self, name: str):
+        return JSCode(f"{self.raw}.{name}")
+
     def __add__(self, other):
         return JSCode(f"({self.raw} + {other})")
 
@@ -29,6 +35,7 @@ class JSCode():
 
     def call(self, *args):
         payload = ",".join(json.dumps(a) if not isinstance(a, JSCode) else str(a) for a in args)
+        print(f"jscode -> {JSCode(f"{self.raw}({payload})")}")
         return JSCode(f"{self.raw}({payload})")
 
     def __call__(self, *args: Any):
@@ -41,11 +48,11 @@ class JSDO:
         self.obj_name = f"{object_name.lower()}_{str(uuid4())[:5]}"
         self.store_js = JS(code=f"const {self.obj_name} = new {object_name}({json.dumps(arg)})")
 
+    def __call__(self):
+        return self.js()
+
     def __format_js__(self, func_name: str, *args) -> JSCode:
-        def fmt_arg(arg):
-            if isinstance(arg, JSCode):
-                return str(arg)
-            return json.dumps(arg)
+
         def mark_js(obj):
             if isinstance(obj, JSCode):
                 return f"__JS__:{obj.raw}"
@@ -58,8 +65,7 @@ class JSDO:
 
         marked = [mark_js(arg) for arg in args]
         payload = json.dumps(marked)
-        payload = re.sub(r'"__JS__:(.*?)"', r'\1', payload)
-
+        payload = re.sub(r'"__JS__:(.*?)(?<!\\)"', lambda m: m.group(1).replace('\\"','"'), payload)
         base_js = f"""{self.obj_name}.{func_name}({payload[1:-1]})"""
         return JSCode(
             base_js
@@ -80,8 +86,12 @@ class JSDO:
 
 
 def Dom(query):
-    return JSCode(f"""document.querySelector(`{query}`).value""")
+    return JSCode(f"""document.querySelector(`{query}`)""")
 
 
 def Not(code: JSCode):
     return JSCode(f"!{code}")
+
+
+def Set(code: JSCode, other: Any):
+    return JSCode(f"{code.raw} = {other}")
