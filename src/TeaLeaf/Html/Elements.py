@@ -1,5 +1,9 @@
 from TeaLeaf.Html.Component import Component, ComponentMeta
 from typing import Union, List, Any
+import re
+from TeaLeaf.Magic.JSCode import JSCode
+import sys
+
 
 class html(Component, metaclass=ComponentMeta):
     pass
@@ -21,6 +25,17 @@ class script(Component):
         if src != None:
             self.attr(src=src)
             self.children = [""]
+        else:
+            funcs = []
+            for child in childs:
+                if type(child) is str:
+                    pattern = r'\bfunction\s+([A-Za-z_$][\w$]*)\s*\('
+                    funcs += re.findall(pattern, child)
+            main_globals = sys.modules["__main__"].__dict__
+            for func in funcs:
+                main_globals[func] = JSCode(func)
+
+
 
 
 

@@ -130,8 +130,6 @@ def home(session, req: HttpRequest):
     modal_state = use_state(True)
     document = JSCode("document")
 
-
-
     web = html(
         head(
             mincss,
@@ -166,7 +164,7 @@ def home(session, req: HttpRequest):
                 div(
                     textInput().id("item_compra"),
                     button("Create").attr(
-                        onclick=JSCode("addTodoIfNotEmpty")("item_compra",JSCode(cstore.do.obj_name))
+                        onclick=addTodoIfNotEmpty("item_compra",JSCode(cstore.do.obj_name))
                     ),
                 ).row(),
             )
