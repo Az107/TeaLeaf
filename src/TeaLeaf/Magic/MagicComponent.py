@@ -1,11 +1,10 @@
+import os
+import json
+import uuid
+from typing import Any
 
 from TeaLeaf.Html.Component import Component
-from TeaLeaf.Html.JS import JS
 from TeaLeaf.Html.Elements import div, script
-from typing import Any
-import uuid
-import json
-import os
 
 
 class FetchComponent(Component):
@@ -31,8 +30,8 @@ class FetchComponent(Component):
         url = json.dumps(url)
         config_js = json.dumps(config)
         id = json.dumps(placeholder._id)
-        js = JS(f"fetchAndUpdate({url},{config_js},{placeholder._id})",
-            file=js_file)
+        js = f"fetchAndUpdate({url},{config_js},{placeholder._id})",
+
         self.append(script(js))
 
     def reid(self):

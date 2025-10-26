@@ -1,7 +1,7 @@
 from TeaLeaf.Html.Component import Component, ComponentMeta
 from typing import Union, List, Any
 import re
-from TeaLeaf.Magic.JSCode import JSCode
+from TeaLeaf.Html.JSCode import JSCode
 import sys
 
 
@@ -19,7 +19,7 @@ class link(Component, metaclass=ComponentMeta):
     pass
 
 class script(Component):
-    def __init__(self, *childs: Union[str, List[Any], "Component"] ,src=None) -> None:
+    def __init__(self, *childs: Union[str, List[Any], "Component"] ,src=None) -> Component:
         super().__init__("script", *childs)
         self.unsafe = True
         if src != None:
@@ -34,8 +34,6 @@ class script(Component):
             main_globals = sys.modules["__main__"].__dict__
             for func in funcs:
                 main_globals[func] = JSCode(func)
-
-
 
 
 

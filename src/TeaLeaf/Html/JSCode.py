@@ -30,7 +30,6 @@ class JSCode():
 
     def call(self, *args):
         payload = ",".join(json.dumps(a) if not isinstance(a, JSCode) else str(a) for a in args)
-        print(f"jscode -> {JSCode(f"{self.raw}({payload})")}")
         return JSCode(f"{self.raw}({payload})")
 
     def __call__(self, *args: Any):

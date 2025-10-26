@@ -49,6 +49,9 @@ class Store {
   async set(id, data) {
     await this._apiCall("POST", id, data);
   }
+  async delete(id) {
+    await this._apiCall("DELETE", id);
+  }
   async update(id, data) {
     await this._apiCall("PATCH", id, data);
   }

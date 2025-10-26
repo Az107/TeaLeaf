@@ -1,17 +1,17 @@
-from TeaLeaf.Html.JS import JS
-import json
-from TeaLeaf.Magic.JSCode import JSCode
-from TeaLeaf.Html.Elements import script
-from typing import Dict, Any
-from uuid import uuid4
 import re
+import json
+from uuid import uuid4
+from typing import Dict, Any
+
+from TeaLeaf.Html.JSCode import JSCode
+from TeaLeaf.Html.Elements import script
 
 
 class JSDO:
     def __init__(self, object_name: str, arg: Any):
         # js_file = os.path.dirname(__file__) + "/Store.js"
         self.obj_name = f"{object_name.lower()}_{str(uuid4())[:5]}"
-        self.store_js = JS(code=f"const {self.obj_name} = new {object_name}({json.dumps(arg)})")
+        self.store_js = f"const {self.obj_name} = new {object_name}({json.dumps(arg)})"
 
     def __call__(self):
         return self.js()
@@ -47,6 +47,9 @@ class JSDO:
 
     def update(self, *args):
         return self.__format_js__("update", *args)
+
+    def delete(self, *args):
+        return self.__format_js__("delete", *args)
 
 
 
