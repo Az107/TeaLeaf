@@ -76,20 +76,32 @@ function authority_zero(a, b) {
   }
   for (const [vdom, dom] of zip(a.children, b.children)) {
     //if (vdom.id.startsWith("tlmg")) continue;
-    if (vdom.innerHTML == dom.innerHTML) continue;
+    if (vdom.isEqualNode(dom)) continue;
     if (vdom.children.length == 0) {
       dom.innerHTML = vdom.innerHTML;
+      for (const attr of vdom.attributes) {
+        if (dom.getAttribute(attr.name) !== attr.value) {
+          dom.setAttribute(attr.name, attr.value);
+        }
+      }
+
+      for (const attr of [...dom.attributes]) {
+        if (!vdom.hasAttribute(attr.name)) {
+          dom.removeAttribute(attr.name);
+        }
+      }
     } else {
       authority_zero(vdom, dom);
     }
   }
+
   if (a.children.length > b.children.length) {
     //add elements
     for (let i = b.children.length; i < a.children.length; i++) {
       b.appendChild(a.children[i]);
     }
   } else if (a.children.length < b.children.length) {
-    for (let i = b.children.length; i > a.children.length; i--) {
+    for (let i = b.children.length - 1; i > a.children.length - 1; i--) {
       b.removeChild(b.children[i]);
     }
   }

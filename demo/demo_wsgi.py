@@ -1,4 +1,3 @@
-from TeaLeaf.Html.JS import JS
 from TeaLeaf.Magic.Store import SuperStore, Store
 from TeaLeaf.Magic.LocalState import use_state
 from TeaLeaf.Server.Server import HttpRequest
@@ -28,8 +27,8 @@ from TeaLeaf.Magic.Common import JSCode, Not, Dom
 app = WSGI()
 SuperStore(app)
 cstore = Store()
-cstore.create(id="todo", data=[])
-cstore.create(id="counter", data=1)
+cstore.create(path="todo", data=[])
+cstore.create(path="counter", data=1)
 print(cstore._id)
 
 mincss_url = "https://cdn.rawgit.com/Chalarangelo/mini.css/v3.0.1/dist/mini-default.min.css"
@@ -109,18 +108,25 @@ def userNav(req: HttpRequest):
     return userCard
 
 
-def elementoCompra(task):
+def elementoCompra(id, task):
     print(task)
     return div(
         checkbox(checked=task["done"]).attr(
             onchange=cstore.do.update(
-                "todo", {"done": not task["done"], "value": task["value"], "id": task["id"]}
+                f"todo/{id}/done", not task["done"]
             )
         ),
         h2(task["value"]).style(text_overflow= "ellipsis"),
-        button("x").classes("secondary")
+        button("x").classes("secondary").attr(onclick=cstore.do.delete(f"todo/{id}"))
     ).row().classes("card")
 
+
+
+@app.route("/logout")
+def logout(session):
+    if session.has("userName"):
+        del session["userName"]
+    return redirect("/login")
 
 @app.route("/")
 def home(session, req: HttpRequest):
@@ -128,12 +134,14 @@ def home(session, req: HttpRequest):
         return redirect("/login")
 
     modal_state = use_state(True)
+    age = use_state(0)
     document = JSCode("document")
-
+    window = JSCode("window")
     web = html(
         head(
             mincss,
             enable_reactivity(),
+            age(),
             modal_state(),
             cstore.do(),
             script("""
@@ -142,21 +150,25 @@ def home(session, req: HttpRequest):
                 if (val.trim() !== "") {
                     store.set("todo", {"done": false, "value": val});
                     document.getElementById(inputId).value = "";
+                } else {
+                    alert("empty task")
                 }
             }
+
             """)
         ),
         body(
             header(
                 div(
                     h1("TeaLeaf!").style(color="green"),
-                    button(f"Welcome {session["userName"]}").attr(onclick=modal_state.set(Not(modal_state.get()))),
+                    button(f"Welcome {session["userName"]}").attr(onclick=window.location.replace("/logout")),
                 ).row()
             ),
+            button("toggle modal").attr(onclick=modal_state.set(Not(modal_state.get()))),
             div("Esto es modal").classes("card").row().attr(hidden=modal_state.get()),
             div(
-                contar(),
-                div([elementoCompra(c) for c in cstore.read("todo")]).style(
+
+                div([elementoCompra(idx, c) for idx,c in enumerate(cstore.read("todo"))]).style(
                     padding="20px",
                     height="200px",
                     overflow_y="scroll"
@@ -174,6 +186,10 @@ def home(session, req: HttpRequest):
 
 
 application = app.wsgi_app  # Punto de entrada WSGI
+
+
+
+
 
 
 if __name__ == "__main__":

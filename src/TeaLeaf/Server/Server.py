@@ -9,20 +9,33 @@ from uuid import uuid4
 import os
 
 
+
 def path_to_regex(path: str) -> str:
     """
-    Converts a path with curly braces into a regex pattern with named capture groups.
+    Converts a path with curly braces and optional wildcards into a regex pattern.
 
-    Example:
-        "/users/{id}" -> "^/users/(?P<id>[^/]+)$"
+    Examples:
+        "/users/{id}"      -> "^/users/(?P<id>[^/]+)$"
+        "/test/{id}/*"     -> "^/test/(?P<id>[^/]+)(?:/.*)?$"
+        "/foo/*/bar"       -> "^/foo/.*/bar$"
 
     Args:
-        path (str): The path pattern with placeholders.
+        path (str): The path pattern with placeholders and/or wildcards.
 
     Returns:
         str: The equivalent regex pattern.
     """
+
+    # Sustituimos {param} por grupos con nombre
     regex = re.sub(r"\{([^}]+)\}", r"(?P<\1>[^/]+)", path)
+
+    # Sustituimos '*' por un patrón que capture el resto del path
+    regex = regex.replace("*", ".*")
+
+    # Si acaba en '.*' (wildcard final), permitimos que sea opcional
+    if regex.endswith(".*"):
+        regex = regex[:-2] + "(?:.*)?"
+
     return f"^{regex}$"
 
 
@@ -158,10 +171,10 @@ def match_path(
     return None
 
 
-def return_worker():
+def return_helper():
     try:
-        worker = open(os.path.dirname(__file__) + "/worker.js")
-        return "200 Ok", worker.read()
+        helper = open(os.path.dirname(__file__) + "/helper.js")
+        return "200 Ok", helper.read()
     except Exception as e:
         print(e)
         return "404 Not Found", "Not Found"
@@ -175,7 +188,7 @@ class Server:
     def __init__(self):
         self.routes = {}
         self.sessions: dict[str, Session] = {}
-        self.add_path("/_engine/worker.js", return_worker)
+        self.add_path("/_engine/helper.js", return_helper)
 
     def __create_session__(self):  # TODO: move to Session class
         """Generates a unique session ID."""
@@ -185,8 +198,7 @@ class Server:
         """Registers a function as a handler for a given route pattern."""
 
         def decorator(func):
-            path_regex = path_to_regex(path)
-            self.routes[path_regex] = func
+            self.add_path(path, func)
             return func
 
         return decorator

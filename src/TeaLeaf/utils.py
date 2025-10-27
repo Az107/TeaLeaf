@@ -4,4 +4,4 @@ def redirect(path: str):
 
 
 def enable_reactivity():
-    return script("", src="_engine/worker.js")
+    return script("", src="_engine/helper.js")
