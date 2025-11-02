@@ -26,9 +26,7 @@ from TeaLeaf.Magic.Common import JSCode, Not, Dom
 
 app = WSGI()
 SuperStore(app)
-cstore = Store()
-cstore.create(path="todo", data=[])
-cstore.create(path="counter", data=1)
+cstore = Store({"todo": [], "counter": 1})
 print(cstore._id)
 
 mincss_url = "https://cdn.rawgit.com/Chalarangelo/mini.css/v3.0.1/dist/mini-default.min.css"

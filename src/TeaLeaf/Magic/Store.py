@@ -19,7 +19,7 @@ class SuperStore:
 
     def __init__(self, server: Server | None = None):
         if not self._initialized:
-            self.api_list: dict[str, "Store"] = {}
+            self.api_list: dict[str, Store | AuthStore] = {}
             self._initialized = True
             self.server = server
             if self.server:
@@ -30,7 +30,7 @@ class SuperStore:
     def len(self):
         return len(self.api_list)
 
-    def add(self, id, store: "Store"):
+    def add(self, id, store: Store | AuthStore):
         self.api_list[id] = store
 
     def process(self,session: Session, req: HttpRequest, api_id):
@@ -40,6 +40,9 @@ class SuperStore:
         store = self.api_list.get(api_id)
         if store is None:
             return "Not found"
+
+        if isinstance(store, AuthStore):
+            store = store.auth(session)
 
         if req.method == "GET":
             return json.dumps(store.read(path))
@@ -53,10 +56,11 @@ class SuperStore:
             return "404 Not Found", "Not found"
 
 
+
 class Store:
-    def __init__(self) -> None:
+    def __init__(self, default={}) -> None:
         self._id = str(uuid4())
-        self.data: Any = {}
+        self.data = default
         self.do = JSDO("Store", self._id)
         SuperStore().add(self._id, self)
 
@@ -140,3 +144,14 @@ class Store:
             parent[item] = data
 
         return parent
+
+
+class AuthStore():
+    def __init__(self, default={}) -> None:
+        self._id = str(uuid4())
+        self.data = default
+        self.do = JSDO("Store", self._id)
+        SuperStore().add(self._id, self)
+
+    def auth(self, session: Session) -> Store:
+        pass
