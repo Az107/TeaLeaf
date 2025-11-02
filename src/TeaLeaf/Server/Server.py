@@ -95,8 +95,8 @@ class HttpRequest:
         self.headers: dict[str, str] = headers
         self.body: str | bytes | io.BufferedReader | None = body
 
-    def to_str(self) -> str:
-        return ""
+    def text(self) -> str:
+        return self.__body_to_text__()
 
 
     def __body_to_text__(self) -> str  | None:

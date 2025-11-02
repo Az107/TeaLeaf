@@ -59,9 +59,9 @@ def contar():
 @app.route("/hello/{name}")
 def saluda(req, name):
     return (
-        202,
+        "200 Ok",
         [("potato-header", "yay")],
-        f"Hello {name} here is your req body {req.body}",
+        f"Hello {name} here is your req body {req.text()}",
     )
 
 
@@ -197,4 +197,7 @@ if __name__ == "__main__":
 
     with make_server("", 8000, application) as server:
         print("Serving on http://127.0.0.1:8000")
-        server.serve_forever()
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+           print("\rBye")
