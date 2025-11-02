@@ -19,7 +19,7 @@ class link(Component, metaclass=ComponentMeta):
     pass
 
 class script(Component):
-    def __init__(self, *childs: Union[str, List[Any], "Component"] ,src=None) -> Component:
+    def __init__(self, *childs: Union[str, List[Any], "Component"] ,src=None):
         super().__init__("script", *childs)
         self.unsafe = True
         if src != None:

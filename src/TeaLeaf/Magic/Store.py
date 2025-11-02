@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Any, Iterable
 import json
 from uuid import uuid4
 from TeaLeaf.Html.Component import Component
@@ -39,7 +39,7 @@ class SuperStore:
 
         store = self.api_list.get(api_id)
         if store is None:
-            return "Not found :C"
+            return "Not found"
 
         if req.method == "GET":
             return json.dumps(store.read(path))
@@ -56,7 +56,7 @@ class SuperStore:
 class Store:
     def __init__(self) -> None:
         self._id = str(uuid4())
-        self.data = {}
+        self.data: Any = {}
         self.do = JSDO("Store", self._id)
         SuperStore().add(self._id, self)
 
@@ -64,9 +64,8 @@ class Store:
     def __get_pointer__(self, path):
         pointer = self.data
         for item in path:
-            print(item)
-            if not isinstance(pointer, Iterable):
-                return None
+            # if not isinstance(pointer, Iterable):
+            #     return None
             if type(pointer) is list:
                 item = int(item)
                 pointer = pointer[item]
@@ -80,6 +79,8 @@ class Store:
     def delete(self, path):
         path = path.split("/") if path != "" else []
         parent = self.__get_pointer__(path[:-1])
+        if parent is None:
+            return None
         item = path[-1]
         if type(parent) is list:
             del parent[int(item)]
@@ -97,6 +98,8 @@ class Store:
 
         parent = self.__get_pointer__(path[:-1])
         item = path[-1]
+        if parent is None:
+            return None
         # match type(parent[item]):
         #     case int:
         #         parent[item] = parent[item] + data
@@ -109,8 +112,8 @@ class Store:
 
 
     def read(self, path: str) -> Any:
-        path = path.split("/") if path != "" else []
-        pointer = self.__get_pointer__(path)
+        path_list = path.split("/") if path != "" else []
+        pointer = self.__get_pointer__(path_list)
         return pointer
 
 
@@ -120,6 +123,8 @@ class Store:
     def create(self, data, path):
         path = path.split("/") if path != "" else []
         parent = self.__get_pointer__(path[:-1])
+        if parent is None:
+            return None
         item = path[-1]
 
         if item in parent:
