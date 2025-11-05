@@ -1,3 +1,4 @@
+import copy
 from typing import Any, Iterable
 import json
 from uuid import uuid4
@@ -44,6 +45,7 @@ class SuperStore:
         if isinstance(store, AuthStore):
             store = store.auth(session)
 
+
         if req.method == "GET":
             return json.dumps(store.read(path))
         elif req.method == "POST":
@@ -58,11 +60,12 @@ class SuperStore:
 
 
 class Store:
-    def __init__(self, default={}) -> None:
+    def __init__(self, default={}, subscribe=True):
         self._id = str(uuid4())
-        self.data = default
+        self.data = copy.copy(default)
         self.do = JSDO("Store", self._id)
-        SuperStore().add(self._id, self)
+        if subscribe:
+            SuperStore().add(self._id, self)
 
 
     def __get_pointer__(self, path):
@@ -147,11 +150,16 @@ class Store:
 
 
 class AuthStore():
-    def __init__(self, default={}) -> None:
+    def __init__(self, auth, default={}) -> None:
         self._id = str(uuid4())
-        self.data = default
+        self.default = copy.deepcopy(default)
+        self.data: dict[str, Store] = {}
+        self.auth_func = auth
         self.do = JSDO("Store", self._id)
         SuperStore().add(self._id, self)
 
     def auth(self, session: Session) -> Store:
-        pass
+        key = self.auth_func(session)
+        if key not in self.data:
+            self.data[key] = Store(default=copy.deepcopy(self.default),subscribe=False)
+        return self.data[key]

@@ -1,4 +1,5 @@
-from TeaLeaf.Magic.Store import SuperStore, Store
+from TeaLeaf.Server.Server import Session
+from TeaLeaf.Magic.Store import AuthStore, SuperStore, Store
 from TeaLeaf.Magic.LocalState import use_state
 from TeaLeaf.Server.Server import HttpRequest
 from TeaLeaf.Server.WSGI import WSGI
@@ -24,9 +25,15 @@ from TeaLeaf.utils import enable_reactivity, redirect
 from TeaLeaf.Magic.Common import JSCode, Not, Dom
 
 
+def auth_session(session: Session):
+    if session.has("userName"):
+        return session["userName"]
+    return None
+
 app = WSGI()
 SuperStore(app)
-cstore = Store({"todo": [], "counter": 1})
+cstore = Store({"counter": 1})
+todoStore = AuthStore(auth_session, {"todo": []})
 print(cstore._id)
 
 mincss_url = "https://cdn.rawgit.com/Chalarangelo/mini.css/v3.0.1/dist/mini-default.min.css"
@@ -142,6 +149,7 @@ def home(session, req: HttpRequest):
             age(),
             modal_state(),
             cstore.do(),
+            todoStore.do(),
             script("""
             function addTodoIfNotEmpty(inputId, store) {
                 let val = document.getElementById(inputId).value;
@@ -166,7 +174,7 @@ def home(session, req: HttpRequest):
             div("Esto es modal").classes("card").row().attr(hidden=modal_state.get()),
             div(
 
-                div([elementoCompra(idx, c) for idx,c in enumerate(cstore.read("todo"))]).style(
+                div([elementoCompra(idx, c) for idx,c in enumerate(todoStore.auth(session).read("todo"))]).style(
                     padding="20px",
                     height="200px",
                     overflow_y="scroll"
@@ -174,7 +182,7 @@ def home(session, req: HttpRequest):
                 div(
                     textInput().id("item_compra"),
                     button("Create").attr(
-                        onclick=addTodoIfNotEmpty("item_compra",JSCode(cstore.do.obj_name))
+                        onclick=addTodoIfNotEmpty("item_compra",JSCode(todoStore.do.obj_name))
                     ),
                 ).row(),
             )

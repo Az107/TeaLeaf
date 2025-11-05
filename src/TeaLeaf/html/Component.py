@@ -36,7 +36,7 @@ class Component:
         :param id: The ID to assign.
         :return: The component instance (for method chaining).
         """
-
+        self._id = id
         return self.attr(id=id)
 
     def classes(self, classes):
