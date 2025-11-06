@@ -1,10 +1,11 @@
+from TeaLeaf.Html.Elements import html
 import copy
 from typing import Any, Iterable
 import json
 from uuid import uuid4
 from TeaLeaf.Html.Component import Component
 from TeaLeaf.Html.Elements import div
-from TeaLeaf.Server.Server import HttpRequest, Server, Session
+from TeaLeaf.Server.Server import HttpRequest, Server, ServerEvents, Session
 from TeaLeaf.Magic.Common import JSDO
 # import os
 
@@ -18,27 +19,35 @@ class SuperStore:
             cls._instance = super(SuperStore, cls).__new__(cls)
         return cls._instance
 
+
+    def inject_stores(self, res_code, res_body, res_headers):
+        if isinstance(res_body, html):
+            for store_id in self.stores:
+                store = self.stores[store_id]
+                res_body.append(store.do.new())
+
     def __init__(self, server: Server | None = None):
         if not self._initialized:
-            self.api_list: dict[str, Store | AuthStore] = {}
+            self.stores: dict[str, Store | AuthStore] = {}
             self._initialized = True
-            self.server = server
-            if self.server:
+            if server:
                 # self.server.add_path("/api/_store/{api_id}/{id}/*", self.process)
-                self.server.add_path("/api/_store/{api_id}/*", self.process)
+                server.add_path("/api/_store/{api_id}/*", self.process)
+                server.registry_hook(ServerEvents.response, self.inject_stores)
+
             self._initialized = True
 
     def len(self):
-        return len(self.api_list)
+        return len(self.stores)
 
     def add(self, id, store: Store | AuthStore):
-        self.api_list[id] = store
+        self.stores[id] = store
 
     def process(self,session: Session, req: HttpRequest, api_id):
         print(f"coll id: {id}")
         path = req.path.removeprefix(f"/api/_store/{api_id}/")
 
-        store = self.api_list.get(api_id)
+        store = self.stores.get(api_id)
         if store is None:
             return "Not found"
 

@@ -146,10 +146,6 @@ def home(session, req: HttpRequest):
         head(
             mincss,
             enable_reactivity(),
-            age(),
-            modal_state(),
-            cstore.do(),
-            todoStore.do(),
             script("""
             function addTodoIfNotEmpty(inputId, store) {
                 let val = document.getElementById(inputId).value;
@@ -160,7 +156,6 @@ def home(session, req: HttpRequest):
                     alert("empty task")
                 }
             }
-
             """)
         ),
         body(
@@ -182,7 +177,7 @@ def home(session, req: HttpRequest):
                 div(
                     textInput().id("item_compra"),
                     button("Create").attr(
-                        onclick=addTodoIfNotEmpty("item_compra",JSCode(todoStore.do.obj_name))
+                        onclick=addTodoIfNotEmpty("item_compra",todoStore.do())
                     ),
                 ).row(),
             )

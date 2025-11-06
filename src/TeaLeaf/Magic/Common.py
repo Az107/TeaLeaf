@@ -14,7 +14,7 @@ class JSDO:
         self.store_js = f"const {self.obj_name} = new {object_name}({json.dumps(arg)})"
 
     def __call__(self):
-        return self.js()
+        return JSCode(self.obj_name)
 
     def __format_js__(self, func_name: str, *args) -> JSCode:
 
@@ -36,7 +36,7 @@ class JSDO:
             base_js
         )
 
-    def js(self):
+    def new(self):
         return script(self.store_js)
 
     def get(self, *args):

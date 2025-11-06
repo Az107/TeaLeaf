@@ -1,12 +1,17 @@
+from enum import Enum
+from typing import Callable
+from dataclasses import dataclass
 import io
 import re
 import json
 import typing
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 import inspect
 from TeaLeaf.Html.Component import Component
 from uuid import uuid4
 import os
+
+from TeaLeaf.Html.Elements import html
 
 
 
@@ -180,6 +185,15 @@ def return_helper():
         return "404 Not Found", "Not Found"
 
 
+
+@dataclass
+class ServerCallback:
+    event: ServerEvents | str
+    callback: Callable[..., None]
+
+class ServerEvents(Enum):
+    response = "response"
+
 class Server:
     """
     HTTP server handling routing and session management.
@@ -188,7 +202,13 @@ class Server:
     def __init__(self):
         self.routes = {}
         self.sessions: dict[str, Session] = {}
+        self.hooks = []
         self.add_path("/_engine/helper.js", return_helper)
+
+
+    def registry_hook(self,event: ServerEvents | str, callback: Callable[..., None]):
+        self.hooks.append(ServerCallback(event, callback))
+
 
     def __create_session__(self):  # TODO: move to Session class
         """Generates a unique session ID."""
@@ -240,6 +260,9 @@ class Server:
         else:
             res_body = response
 
+        for callback in self.hooks:
+            if callback.event == ServerEvents.response:
+                callback.callback(res_code, res_body, res_headers)
         content_type = "text/plain"
         if isinstance(res_body, Component):
             content_type = "text/html"
