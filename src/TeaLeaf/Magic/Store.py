@@ -1,9 +1,11 @@
+from TeaLeaf.Html.Elements import html
+import copy
 from typing import Any, Iterable
 import json
 from uuid import uuid4
 from TeaLeaf.Html.Component import Component
 from TeaLeaf.Html.Elements import div
-from TeaLeaf.Server.Server import HttpRequest, Server, Session
+from TeaLeaf.Server.Server import HttpRequest, Server, ServerEvents, Session
 from TeaLeaf.Magic.Common import JSDO
 # import os
 
@@ -17,29 +19,41 @@ class SuperStore:
             cls._instance = super(SuperStore, cls).__new__(cls)
         return cls._instance
 
+
+    def inject_stores(self, res_code, res_body, res_headers):
+        if isinstance(res_body, html):
+            for store_id in self.stores:
+                store = self.stores[store_id]
+                res_body.append(store.do.new())
+
     def __init__(self, server: Server | None = None):
         if not self._initialized:
-            self.api_list: dict[str, "Store"] = {}
+            self.stores: dict[str, Store | AuthStore] = {}
             self._initialized = True
-            self.server = server
-            if self.server:
+            if server:
                 # self.server.add_path("/api/_store/{api_id}/{id}/*", self.process)
-                self.server.add_path("/api/_store/{api_id}/*", self.process)
+                server.add_path("/api/_store/{api_id}/*", self.process)
+                server.registry_hook(ServerEvents.response, self.inject_stores)
+
             self._initialized = True
 
     def len(self):
-        return len(self.api_list)
+        return len(self.stores)
 
-    def add(self, id, store: "Store"):
-        self.api_list[id] = store
+    def add(self, id, store: Store | AuthStore):
+        self.stores[id] = store
 
     def process(self,session: Session, req: HttpRequest, api_id):
         print(f"coll id: {id}")
         path = req.path.removeprefix(f"/api/_store/{api_id}/")
 
-        store = self.api_list.get(api_id)
+        store = self.stores.get(api_id)
         if store is None:
             return "Not found"
+
+        if isinstance(store, AuthStore):
+            store = store.auth(session)
+
 
         if req.method == "GET":
             return json.dumps(store.read(path))
@@ -53,12 +67,14 @@ class SuperStore:
             return "404 Not Found", "Not found"
 
 
+
 class Store:
-    def __init__(self) -> None:
+    def __init__(self, default={}, subscribe=True):
         self._id = str(uuid4())
-        self.data: Any = {}
+        self.data = copy.copy(default)
         self.do = JSDO("Store", self._id)
-        SuperStore().add(self._id, self)
+        if subscribe:
+            SuperStore().add(self._id, self)
 
 
     def __get_pointer__(self, path):
@@ -140,3 +156,19 @@ class Store:
             parent[item] = data
 
         return parent
+
+
+class AuthStore():
+    def __init__(self, auth, default={}) -> None:
+        self._id = str(uuid4())
+        self.default = copy.deepcopy(default)
+        self.data: dict[str, Store] = {}
+        self.auth_func = auth
+        self.do = JSDO("Store", self._id)
+        SuperStore().add(self._id, self)
+
+    def auth(self, session: Session) -> Store:
+        key = self.auth_func(session)
+        if key not in self.data:
+            self.data[key] = Store(default=copy.deepcopy(self.default),subscribe=False)
+        return self.data[key]
