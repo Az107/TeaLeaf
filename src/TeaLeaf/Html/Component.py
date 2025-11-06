@@ -1,15 +1,10 @@
-import hashlib
-import json
 from typing import List, Union, Any
 import uuid
 from types import FunctionType
 import inspect
-import html as html_tools
-from dataclasses import dataclass
 
-globals()["component_cache"] = {}
-globals()["render_calls"] = 0
-CACHE_ENABLED = True
+
+
 
 class Component:
     """
@@ -24,8 +19,9 @@ class Component:
         :param name: The tag name of the HTML element.
         :param childs: Optional children elements, which can be strings, lists, or other Component instances.
         """
-        self.unsafe = False
-        self._id: str = "tl" + name[:2]
+
+        self.styles: str | None = None
+        self._id: str = "tl" + str(uuid.uuid4())
         self.name = name
         self.children: list[Component | str | list] = list(childs)
         self.attributes: dict[str, str | None] = dict()
@@ -37,6 +33,7 @@ class Component:
         :param id: The ID to assign.
         :return: The component instance (for method chaining).
         """
+
         self._id = id
         return self.attr(id=id)
 
@@ -51,7 +48,7 @@ class Component:
         self.attributes["class"] = classes
         return self
 
-    def style(self, **attr):
+    def style(self, path: str | None = None, **attr):
         """
         Adds inline styles to the component.
 
@@ -59,15 +56,17 @@ class Component:
         :param attr: CSS properties to apply (e.g., color="red", margin="10px").
         :return: The component instance (for method chaining).
         """
-        style = ""
-        for k in attr:
-            v = attr[k]
-            style += f"{k}: {v};"
 
-        self.attributes["style"] = style
+        self.styles = (self.styles or "") + f"#{self._id} {{\n"
+        self.styles += "\n".join(
+            f"  {k.replace('_', '-')}: {v};" for k, v in attr.items()
+        )
+        self.styles += "\n}"
 
+        if path:
+            with open(path, "r") as f:
+                self.styles += f.read()
         return self
-
 
     def attr(self,*args, **attr):
         """
@@ -81,7 +80,6 @@ class Component:
             self.attributes[arg] = None
 
         for k in attr:
-
             # if type(attr[k]) is str:
             self.attributes[k] = str(attr[k])
             # elif type(attr[k]) is FunctionType:
@@ -102,91 +100,78 @@ class Component:
         return self
 
     def __build_attr__(self) -> str:
-        if len(self.attributes) == 0:
-            return ""
         return " " + " ".join(
             f"{k}='{v}'" if v is not None else f"{k}" for k, v in self.attributes.items()
         )
 
-
-    def __build_html__(self, enable_styles = False) -> str:
-        def render_child(child: str|list|Component) -> str:
+    def __build_child__(self, children: list):
+        html_parts = []
+        css_parts = []
+        for child in children:
             if isinstance(child, str):
-                if self.unsafe:
-                    return child
-                else:
-                    return html_tools.escape(str(child), quote=True)
+                html_parts.append(f"{child}")
             elif isinstance(child, list):
-                result = ""
-                for c in child:
-                    result += render_child(c)
-                return result
+                html, css = self.__build_child__(child)
+                html_parts.append(html)
+                css_parts.append(css)
             elif isinstance(child, Component):
-                result = child.__build_html__()
-                return result
+                html, css = child.build()
+                html_parts.append(html)
+                css_parts.append(css)
             else:
                 try:
-                    return str(child)
+                    html_parts.append(str(child))
                 except Exception:
-                    pass
+                    continue
+        return "".join(html_parts), "".join(filter(None, css_parts))
 
+    def build(self) -> tuple[str, str]:
+        """
+        Builds the component's HTML and CSS separately.
 
-        hash = self.__hash_state__()
-        if CACHE_ENABLED and hash in globals()["component_cache"]:
-            return globals()["component_cache"][hash]
-        globals()["render_calls"] += 1
-        if "id" in self.attributes:
+        :return: A tuple (HTML string, CSS string)
+        """
+
+        if self.styles is not None and "id" not in self.attributes:
             self.attr(id=self._id)
-
         if len(self.children) == 0:
-            result = f"<{self.name}{self.__build_attr__()}/>"
+            result = f"<{self.name}{self.__build_attr__()}/>\n"
         else:
-            result = f"<{self.name}{self.__build_attr__()}>"
-            for child in self.children:
-                result += render_child(child)
-            result += f"</{self.name}>"
-        if CACHE_ENABLED:
-            globals()["component_cache"][hash] = result
-        return result
+            endln = "\n" if len(self.children) > 1 else ""
+            result = f"<{self.name}{self.__build_attr__()}>{endln}"
+            html, styles = self.__build_child__(self.children)
+            result += html
+            if self.styles is None:
+                self.styles = styles
+            else:
+                self.styles += styles
+            result += f"\t</{self.name}>\n"
+        css: str = "" if self.styles is None else self.styles
+        return result, css
 
-
-
-    # @lru_cache
     def render(self) -> str:
         """
         Builds and returns the full HTML including inline CSS inside a <style> tag.
 
         :return: A complete HTML string with embedded CSS.
         """
-        globals()["render_calls"] = 0
-        result = self.__build_html__()
+
+        if len(self.children) == 0:
+            result = f"<{self.name}{self.__build_attr__()}/>\n"
+        else:
+            inner_result, css = self.__build_child__(self.children)
+            if self.styles is None:
+                self.styles = css
+            else:
+                self.styles += css
+                self.styles += "\n"
+            result = f"<{self.name}{self.__build_attr__()}>\n"
+            if self.styles is not None:
+                result += f"<style>{self.styles}</style>\n"
+            result += inner_result
+            result += f"</{self.name}>\n"
+
         return result
-
-
-
-    def __hash_state__(self) -> str:
-        """
-        Devuelve un hash único que representa el estado actual del componente.
-        """
-
-        def serialize_child(child):
-            if isinstance(child, Component):
-                return child.__hash_state__()
-            elif isinstance(child, list):
-                return [serialize_child(c) for c in child]
-            return str(child)
-
-        state = {
-            "name": self.name,
-            "attributes": self.attributes,
-            "children": [serialize_child(c) for c in self.children],
-        }
-
-        raw = json.dumps(state, sort_keys=True, default=str)
-        return hashlib.sha1(raw.encode()).hexdigest()
-
-
-
 
 
 class ComponentMeta(type):

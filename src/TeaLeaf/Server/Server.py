@@ -1,18 +1,15 @@
-from enum import Enum
-from typing import Callable
-from dataclasses import dataclass
-import io
-import re
-import json
-import typing
-from typing import Any, Dict, Optional
 import inspect
-from TeaLeaf.Html.Component import Component
-from uuid import uuid4
+import io
+import json
 import os
+import re
+import typing
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Callable, Dict, Optional
+from uuid import uuid4
 
-from TeaLeaf.Html.Elements import html
-
+from TeaLeaf.Html.Component import Component
 
 
 def path_to_regex(path: str) -> str:
@@ -70,7 +67,6 @@ class Session(dict):
         """Checks if a session attribute exists."""
         return self.get(attr) is not None
 
-
     def __getattr__(self, attr):
         try:
             return self[attr]
@@ -100,14 +96,12 @@ class HttpRequest:
         self.headers: dict[str, str] = headers
         self.body: str | bytes | io.BufferedReader | None = body
 
-    def text(self) -> str  | None:
+    def text(self) -> str | None:
         return self.__body_to_text__()
 
-
-    def __body_to_text__(self) -> str  | None:
+    def __body_to_text__(self) -> str | None:
         if "content_length" not in self.headers:
             return None
-
 
         body_size = int(self.headers.get("content_length") or 0)
         if body_size == 0:
@@ -123,7 +117,6 @@ class HttpRequest:
             return self.body
         else:
             raise ValueError("Invalid body type")
-
 
     def form(self) -> dict[str, str] | None:
         """
@@ -148,7 +141,7 @@ class HttpRequest:
 
         body = self.__body_to_text__()
         if body is None:
-             return None
+            return None
         try:
             return json.loads(body)
         except (json.JSONDecodeError, AttributeError):
@@ -185,14 +178,15 @@ def return_helper():
         return "404 Not Found", "Not Found"
 
 
+class ServerEvents(Enum):
+    response = "response"
+
 
 @dataclass
 class ServerCallback:
     event: ServerEvents | str
     callback: Callable[..., None]
 
-class ServerEvents(Enum):
-    response = "response"
 
 class Server:
     """
@@ -205,10 +199,8 @@ class Server:
         self.hooks = []
         self.add_path("/_engine/helper.js", return_helper)
 
-
-    def registry_hook(self,event: ServerEvents | str, callback: Callable[..., None]):
+    def registry_hook(self, event: ServerEvents | str, callback: Callable[..., None]):
         self.hooks.append(ServerCallback(event, callback))
-
 
     def __create_session__(self):  # TODO: move to Session class
         """Generates a unique session ID."""

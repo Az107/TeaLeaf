@@ -1,6 +1,8 @@
 import json
+from typing import Any
 
-class JSCode():
+
+class JSCode:
     def __init__(self, raw: str):
         self.raw = raw
 
@@ -29,7 +31,9 @@ class JSCode():
         return JSCode(f"({self.raw} / {other})")
 
     def call(self, *args):
-        payload = ",".join(json.dumps(a) if not isinstance(a, JSCode) else str(a) for a in args)
+        payload = ",".join(
+            json.dumps(a) if not isinstance(a, JSCode) else str(a) for a in args
+        )
         return JSCode(f"{self.raw}({payload})")
 
     def __call__(self, *args: Any):
