@@ -73,12 +73,12 @@ class Session(dict):
 
     def __getattr__(self, attr):
         try:
-            return self[attr]  # Acceder como diccionario
+            return self[attr]
         except KeyError:
             raise AttributeError(f"'Session' object has no attribute '{attr}'")
 
     def __setattr__(self, attr, value):
-        self[attr] = value  # Guardar en el diccionario
+        self[attr] = value
 
 
 class HttpRequest:

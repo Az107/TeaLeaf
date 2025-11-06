@@ -1,79 +1,86 @@
-# TeaLeaf 🍃☕✨
-## SSE framework for python
-TeaLeaf is a Python web framework designed to work seamlessly with HTeaPot.
-It provides a declarative and reactive approach to building web applications,
-inspired by SwiftUI.
-TeaLeaf allows you to create server-side rendered (SSR) applications
+# 🍃 TeaLeaf
 
-## Features 🔧
-### There are the actual and planed features
-- [x] *Server-Side* Rendering (SSR): Generate HTML on the server for improved performance.
-- [x] *Declarative UI*: Define your UI using a simple function-based syntax.
-- [x] *Session managment*: TeaLeaf keep and handle data for sessions autmatically.
-- [x] *WSGI and API Handling*: Serve dynamic content and interact with APIs.
-- [x] *SuperStore*: A built-in store system that generates CRUD endpoints for data management.
-- [x] *Scoped Styling*: Components can define their styles, which are automatically scoped and injected.
-- [ ] *Reactivity*: Automatically update components using SSE.
-- [ ] *Component-Based Architecture*: Reusable components for structuring your application.
-- [ ] *Hydration Support*: Enable dynamic updates without full-page reloads.
+**TeaLeaf** is a *declarative web framework for Python* —
+it lets you build dynamic, reactive web apps using **pure Python**,
+without writing templates or frontend JavaScript manually.
 
-## Installation 📦
-TeaLeaf is still in development and not yet available as a package. You can clone the repository and integrate it into your project manually.
-```bash
-# Clone the repository
-git clone https://github.com/your-repo/tealeaf.git
+---
 
-# Navigate to the project folder
-cd tealeaf
-```
+## ✨ Overview
 
-## Usage 🚀
+TeaLeaf merges ideas from modern frontend frameworks like React, Svelte, and SolidJS
+with the simplicity of traditional Python web servers.
 
-### Defining a Page
-```Python
-from TeaLeaf.WSGI import WSGI
-from tealeaf.Html.Elements import body, h1, p, Button
-app = WSGI()
+You declare HTML directly in Python, manage reactive state via `Store` objects,
+and TeaLeaf takes care of keeping everything in sync — automatically.
 
-app.route("/")
-def index():
-    return body(
-        h1("Welcome to TeaLeaf!"),
-        p("A simple and reactive Python web framework."),
-        Button("Click me")
-    )
-```
+---
 
-### Using SuperStore 🗄️
-```Python
+## 🚀 Quick Example
+
+```python
+from TeaLeaf.Server.WSGI import WSGI
+from TeaLeaf.Magic.Store import Store, SuperStore
+from TeaLeaf.Html.Elements import div, h3, button
+
+# Create the server
 app = WSGI()
 SuperStore(app)
-todo_store = Store()
-todo_store.create(id="todo",data=[])
 
+# Reactive server-side store
+counter = Store({"count": 0})
 
-app.route("/todos")
-def todos():
-    return body(
-        script(todo_store.do.js()),
-        h1("TO-DO tasks"),
-        [h3(c) for c in todo_store.read("todo")],
-        div(
-            textInput().id("new-todo"),
-            button("Create").attr(
-                onclick=todo_store.do.Update(
-                    "todo",
-                    Dom("#new-todo")
-                )),
-        ).row()
+@app.route("/")
+def home():
+    return div(
+        button("-").attr(onclick=counter.do.update("count", -1)),
+        h3(counter.react("count")),
+        button("+").attr(onclick=counter.do.update("count", 1)),
     )
+
+application = app.wsgi_app
+
+if __name__ == "__main__":
+    from wsgiref.simple_server import make_server
+    with make_server("", 8000, application) as server:
+        print("Serving at http://127.0.0.1:8000")
+        server.serve_forever()
 ```
 
-## Roadmap 🛤️
+Open your browser and visit http://127.0.0.1:8000 —
+you’ll see a fully reactive counter built with only Python
 
 
-## Contributing 🤝
-Contributions are welcome! Feel free to submit issues or pull requests to improve TeaLeaf.
+## Key Features
+-  Declarative HTML components — build DOM structures with Python functions
+-	 Path-based routing — simple, expressive route definitions
+-	 Reactive server state (Store, AuthStore) — auto-sync between backend and UI
+-	 JS transpilation (JSCode, JSDO) — write JavaScript logic directly in Python
+-	Session support — cookies and per-user AuthStore state
 
-## License 📜
-eaLeaf is released under the MIT License.
+##  Roadmap
+
+- [x] Declarative HTML components
+- [x] Path mapping
+- [x] Server Side State (Stores)
+- [x] JS transcription from python
+- [ ] Client Side state
+- [ ] State hooks
+- [ ] Template system
+- [ ] Persistent Store (redis,SQL...)
+- [ ] CLI
+- [ ] Render optimisation
+
+Documentation
+
+Full documentation is available in the [Wiki](https://github.com/Az107/TeaLeaf/wiki/Welcome-to-the-TeaLeaf!)
+
+## Status
+
+TeaLeaf is currently in alpha.
+It’s stable enough for experimentation and small demos,
+but the public API might still change before beta.
+
+## License
+
+MIT License © 2025 — TeaLeaf Framework Made with 🍃 and Python.

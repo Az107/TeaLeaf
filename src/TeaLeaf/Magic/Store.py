@@ -44,7 +44,6 @@ class SuperStore:
         self.stores[id] = store
 
     def process(self,session: Session, req: HttpRequest, api_id):
-        print(f"coll id: {id}")
         path = req.path.removeprefix(f"/api/_store/{api_id}/")
 
         store = self.stores.get(api_id)

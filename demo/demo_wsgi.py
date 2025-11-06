@@ -34,7 +34,6 @@ app = WSGI()
 SuperStore(app)
 cstore = Store({"counter": 1})
 todoStore = AuthStore(auth_session, {"todo": []})
-print(cstore._id)
 
 mincss_url = "https://cdn.rawgit.com/Chalarangelo/mini.css/v3.0.1/dist/mini-default.min.css"
 mincss = link().attr(rel="stylesheet",href=mincss_url)
@@ -62,11 +61,11 @@ def contar():
 
 
 @app.route("/hello/{name}")
-def saluda(req, name):
+def saluda(name):
     return (
         "200 Ok",
         [("potato-header", "yay")],
-        f"Hello {name} here is your req body {req.text()}",
+        f"Hello {name}",
     )
 
 
@@ -83,9 +82,7 @@ def LoginPage():
 def user(session, req: HttpRequest):
     if session.has("userName"):
         return "Hello " + session.userName
-    print(req.body)
     user = req.form()
-    print(user)
     if user is None or not "userName" in user:
         return "401 unauthorized", LoginPage()
     else:
@@ -114,7 +111,6 @@ def userNav(req: HttpRequest):
 
 
 def elementoCompra(id, task):
-    print(task)
     return div(
         checkbox(checked=task["done"]).attr(
             onchange=cstore.do.update(

@@ -158,7 +158,6 @@ class Component:
         """
         globals()["render_calls"] = 0
         result = self.__build_html__()
-        print(f"render calls:  {globals()["render_calls"]}")
         return result
 
 
