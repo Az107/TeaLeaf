@@ -1,3 +1,4 @@
+from TeaLeaf.Html.Component import Component
 import inspect
 import io
 import json
@@ -6,10 +7,9 @@ import re
 import typing
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Optional
 from uuid import uuid4
 
-from TeaLeaf.Html.Component import Component
 
 
 def path_to_regex(path: str) -> str:
@@ -94,7 +94,7 @@ class HttpRequest:
         self.path: str = path
         self.args: dict[str, str] = args
         self.headers: dict[str, str] = headers
-        self.body: str | bytes | io.BufferedReader | None = body
+        self.body: str | bytes | io.BufferedReader | Any | None = body
 
     def text(self) -> str | None:
         return self.__body_to_text__()
@@ -104,7 +104,7 @@ class HttpRequest:
             return None
 
         body_size = int(self.headers.get("content_length") or 0)
-        if body_size == 0:
+        if body_size == 0 or self.body is None:
             return None
         if isinstance(self.body, io.BufferedReader):
             if not self.body.closed and self.body.readable():
@@ -115,8 +115,11 @@ class HttpRequest:
             return self.body.decode("utf-8")
         elif isinstance(self.body, str):
             return self.body
+        elif hasattr(self.body, '__iter__'):
+            result = b"".join([d for d in iter(self.body)])
+            return result.decode("utf-8")
         else:
-            raise ValueError("Invalid body type")
+            raise ValueError(f"Invalid body type: {type(self.body)}")
 
     def form(self) -> dict[str, str] | None:
         """

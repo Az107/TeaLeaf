@@ -2,6 +2,7 @@ import json
 from typing import Any
 
 
+
 class JSCode:
     def __init__(self, raw: str):
         self.raw = raw

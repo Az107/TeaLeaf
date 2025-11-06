@@ -79,10 +79,6 @@ class button(Component, metaclass=ComponentMeta):
         :param component: The FetchComponent to be updated.
         """
 
-        #config = {"method": "GET"}
-
-        # Serializar la configuración en JSON para JS
-        #config_js = json.dumps(config)
         js = f"""fetchAndUpdate('{path}','{{}}','{component_id}')"""
         self.attr(onclick=js)
         return self

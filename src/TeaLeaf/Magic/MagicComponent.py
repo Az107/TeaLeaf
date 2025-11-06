@@ -30,7 +30,7 @@ class FetchComponent(Component):
         url = json.dumps(url)
         config_js = json.dumps(config)
         id = json.dumps(placeholder._id)
-        js = f"fetchAndUpdate({url},{config_js},{placeholder._id})",
+        js: str = f"fetchAndUpdate({url},{config_js},{placeholder._id})"
 
         self.append(script(js))
 
