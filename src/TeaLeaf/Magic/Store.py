@@ -21,7 +21,7 @@ class SuperStore:
 
 
     def inject_stores(self, res_code, res_body, res_headers):
-        if isinstance(res_body, html):
+        if isinstance(res_body, Component):
             for store_id in self.stores:
                 store = self.stores[store_id]
                 res_body.append(store.do.new())
@@ -57,11 +57,11 @@ class SuperStore:
         if req.method == "GET":
             return json.dumps(store.read(path))
         elif req.method == "POST":
-            return json.dumps(store.create(req.json() or req.body, path))
+            return json.dumps(store.create(req.json() or req.text(), path))
         elif req.method == "DELETE":
             return json.dumps(store.delete(path))
         elif req.method == "PATCH":
-            return json.dumps(store.update(path, req.json() or req.body))
+            return json.dumps(store.update(path, req.json() or req.text()))
         else:
             return "404 Not Found", "Not found"
 
@@ -93,6 +93,9 @@ class Store:
 
     def delete(self, path):
         path = path.split("/") if path != "" else []
+        print(self.data)
+        print(f"Delete: {path[:-1]}")
+
         parent = self.__get_pointer__(path[:-1])
         if parent is None:
             return None
@@ -160,7 +163,7 @@ class Store:
 class AuthStore():
     def __init__(self, auth, default={}) -> None:
         self._id = str(uuid4())
-        self.default = copy.deepcopy(default)
+        self.default = default
         self.data: dict[str, Store] = {}
         self.auth_func = auth
         self.do = JSDO("Store", self._id)

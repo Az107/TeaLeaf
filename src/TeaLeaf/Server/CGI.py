@@ -6,7 +6,7 @@ from TeaLeaf.Server import Server
 from TeaLeaf.Html.Component import Component
 
 
-class CGI(Server):
+class CGI(Server.Server):
     def __init__(self) -> None:
         super().__init__()
         input_data = sys.stdin.read()
@@ -40,7 +40,7 @@ class CGI(Server):
         content = payload
         if isinstance(payload, Component):
             try:
-                content = payload.build()
+                content = payload.render()
             except Exception:
                 print("<h1>500 Internal Server Error</h1>")
         print(content)

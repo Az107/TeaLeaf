@@ -53,9 +53,9 @@ def health(req: HttpRequest):
 def contar():
 
     return div(
-            rButton("-").attr(onclick=cstore.do.update("counter",-1)),
+        button("-").attr(onclick=cstore.do.update("counter",cstore.read("counter") - 1)),
             h3( cstore.react("counter")),
-            rButton("+").attr(onclick=cstore.do.update("counter", 1)),
+        button("+").attr(onclick=cstore.do.update("counter", cstore.read("counter") + 1)),
         ).row()
 
 
@@ -113,12 +113,12 @@ def userNav(req: HttpRequest):
 def elementoCompra(id, task):
     return div(
         checkbox(checked=task["done"]).attr(
-            onchange=cstore.do.update(
+            onchange=todoStore.do.update(
                 f"todo/{id}/done", not task["done"]
             )
         ),
         h2(task["value"]).style(text_overflow= "ellipsis"),
-        button("x").classes("secondary").attr(onclick=cstore.do.delete(f"todo/{id}"))
+        button("x").classes("secondary").attr(onclick=todoStore.do.delete(f"todo/{id}"))
     ).row().classes("card")
 
 
@@ -164,7 +164,7 @@ def home(session, req: HttpRequest):
             button("toggle modal").attr(onclick=modal_state.set(Not(modal_state.get()))),
             div("Esto es modal").classes("card").row().attr(hidden=modal_state.get()),
             div(
-
+                contar(),
                 div([elementoCompra(idx, c) for idx,c in enumerate(todoStore.auth(session).read("todo"))]).style(
                     padding="20px",
                     height="200px",

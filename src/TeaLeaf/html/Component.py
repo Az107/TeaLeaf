@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 globals()["component_cache"] = {}
 globals()["render_calls"] = 0
+CACHE_ENABLED = True
 
 class Component:
     """
@@ -131,7 +132,7 @@ class Component:
 
 
         hash = self.__hash_state__()
-        if hash in globals()["component_cache"]:
+        if CACHE_ENABLED and hash in globals()["component_cache"]:
             return globals()["component_cache"][hash]
         globals()["render_calls"] += 1
         if "id" in self.attributes:
@@ -144,7 +145,8 @@ class Component:
             for child in self.children:
                 result += render_child(child)
             result += f"</{self.name}>"
-        globals()["component_cache"][hash] = result
+        if CACHE_ENABLED:
+            globals()["component_cache"][hash] = result
         return result
 
 
