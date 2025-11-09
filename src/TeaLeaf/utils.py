@@ -1,6 +1,6 @@
 from TeaLeaf.Html.Component import Component
 from TeaLeaf.Html.Elements import script
-from TeaLeaf.Server.Server import Server, ServerEvents
+from TeaLeaf.Server.Server import Server, ServerEvent
 def redirect(path: str):
     return "302 Found", [("Location", path)], ""
 
@@ -12,4 +12,4 @@ def enable_reactivity(server: Server):
         if isinstance(res_body, Component):
             res_body.append(helper_script)
 
-    server.registry_hook(ServerEvents.response, event_handler)
+    server.registry_hook(ServerEvent.before_response, event_handler)

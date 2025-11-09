@@ -4,7 +4,7 @@ import json
 from uuid import uuid4
 from TeaLeaf.Html.Component import Component
 from TeaLeaf.Html.Elements import div
-from TeaLeaf.Server.Server import HttpRequest, Server, ServerEvents, Session
+from TeaLeaf.Server.Server import HttpRequest, Server, ServerEvent, Session
 from TeaLeaf.Magic.Common import JSDO
 
 
@@ -32,7 +32,7 @@ class SuperStore:
             if server:
                 # self.server.add_path("/api/_store/{api_id}/{id}/*", self.process)
                 server.add_path("/api/_store/{api_id}/*", self.process)
-                server.registry_hook(ServerEvents.response, self.inject_stores)
+                server.registry_hook(ServerEvent.before_response, self.inject_stores)
 
             self._initialized = True
 

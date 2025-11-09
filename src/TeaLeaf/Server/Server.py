@@ -77,6 +77,28 @@ class Session(dict):
         self[attr] = value
 
 
+class Headers():
+    def __init__(self, data: dict[str,str] = {}):
+        self._data: dict[str, str] = {}
+        for k in data:
+            self._data[k.lower()] = data[k]
+
+    def __getitem__(self, key: str):
+        return self._data.get(key.lower())
+
+
+    def __setitem__(self, name: str, value: str) -> None:
+        self._data[name.lower()] = value
+
+
+    def get(self, key: str):
+        return self._data.get(key.lower())
+
+
+    def __contains__(self, item):
+        return item.lower() in self._data
+
+
 class HttpRequest:
     """
     Represents an HTTP request with attributes for method, path, headers, and body.
@@ -93,7 +115,7 @@ class HttpRequest:
         self.method: str = method
         self.path: str = path
         self.args: dict[str, str] = args
-        self.headers: dict[str, str] = headers
+        self.headers: Headers = Headers(headers)
         self.body: str | bytes | io.BufferedReader | Any | None = body
 
     def text(self) -> str | None:
@@ -181,14 +203,11 @@ def return_helper():
         return "404 Not Found", "Not Found"
 
 
-class ServerEvents(Enum):
-    response = "response"
+class ServerEvent(Enum):
+    before_response = "before_response"
+    on_request = "on_request"
+    new_session = "new_session"
 
-
-@dataclass
-class ServerCallback:
-    event: ServerEvents | str
-    callback: Callable[..., None]
 
 
 class Server:
@@ -199,15 +218,29 @@ class Server:
     def __init__(self):
         self.routes = {}
         self.sessions: dict[str, Session] = {}
-        self.hooks = []
+        self._hooks: dict[ServerEvent,list[Callable[..., None]]] = {event: [] for event in ServerEvent}
         self.add_path("/_engine/helper.js", return_helper)
 
-    def registry_hook(self, event: ServerEvents | str, callback: Callable[..., None]):
-        self.hooks.append(ServerCallback(event, callback))
+    def registry_hook(self, event: ServerEvent, callback: Callable[..., None]):
+        event_hooks = self._hooks.get(event)
+        if event_hooks is None:
+            raise Exception("event dont exist")
+        event_hooks.append(callback)
+
+    def __call_hook__(self, event: ServerEvent, *payload):
+        pass
+        events = self._hooks.get(event)
+        if events is None:
+            return
+        for callback in events:
+            callback(*payload)
 
     def __create_session__(self):  # TODO: move to Session class
         """Generates a unique session ID."""
-        return str(uuid4())
+        session_id = str(uuid4())
+        self.sessions[session_id] = Session()
+        self.__call_hook__(ServerEvent.new_session, self.sessions[session_id])
+        return session_id
 
     def route(self, path):
         """Registers a function as a handler for a given route pattern."""
@@ -229,7 +262,6 @@ class Server:
         if cookies.get("TeaLeaf-Session") is None:
             session_id = self.__create_session__()
             header_session_cookie = ("Set-Cookie", f"TeaLeaf-Session={session_id}")
-            self.sessions[session_id] = Session()
         else:
             session_id = cookies["TeaLeaf-Session"]
             if self.sessions.get(session_id) is None:
@@ -240,24 +272,19 @@ class Server:
     def __process_response__(self, response):
         res_code = "200 OK"
         res_headers = []
-        if type(response) is tuple:
-            res_len = len(response) - 1
-            res_body = response[res_len]
-            response = response[:res_len]
-            for res_item in response:
-                if type(res_item) is str or type(res_item) is int:
-                    res_code = str(res_item)
-                elif type(res_item) is list and type(res_item[0] is tuple):
-                    res_headers += res_item
-                else:
-                    raise Exception("invalid type")
-
+        if isinstance(response, tuple):
+            if len(response) == 3:
+                res_code, res_headers, res_body = response
+            elif len(response) == 2:
+                res_code, res_body = response
+                res_headers = []
+            else:
+                res_body = response[0]
+                res_code, res_headers = "200 OK", []
         else:
             res_body = response
 
-        for callback in self.hooks:
-            if callback.event == ServerEvents.response:
-                callback.callback(res_code, res_body, res_headers)
+        self.__call_hook__(ServerEvent.before_response, res_code, res_body, res_headers)
         content_type = "text/plain"
         if isinstance(res_body, Component):
             content_type = "text/html"
@@ -271,7 +298,7 @@ class Server:
 
     def handle_request(self, request: HttpRequest):
         handler_and_match = match_path(self.routes, request.path)
-
+        self.__call_hook__(ServerEvent.on_request, request)
         if handler_and_match:
             params, handler = handler_and_match
             params["req"] = request
