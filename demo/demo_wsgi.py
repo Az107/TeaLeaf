@@ -31,6 +31,7 @@ def auth_session(session: Session):
     return None
 
 app = WSGI()
+enable_reactivity(app)
 SuperStore(app)
 cstore = Store({"counter": 1})
 todoStore = AuthStore(auth_session, {"todo": []})
@@ -141,7 +142,6 @@ def home(session, req: HttpRequest):
     web = html(
         head(
             mincss,
-            enable_reactivity(),
             script("""
             function addTodoIfNotEmpty(inputId, store) {
                 let val = document.getElementById(inputId).value;
