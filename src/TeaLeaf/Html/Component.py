@@ -176,7 +176,6 @@ class Component:
 
 class ComponentMeta(type):
     def __new__(cls, name, bases, dct):
-        # Creamos una clase personalizada para cada componente HTML
         if name not in ("Component", "ComponentMeta"):
 
             def init(self, *childs):

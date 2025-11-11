@@ -93,7 +93,6 @@ def user(session, req: HttpRequest):
 
 @app.route("/example")
 def userNav(req: HttpRequest):
-    print(req.body)
     user = req.json()
     if user is None:
         name = ""
