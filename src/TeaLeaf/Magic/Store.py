@@ -30,9 +30,8 @@ class SuperStore:
             self.stores: dict[str, Store | AuthStore] = {}
             self._initialized = True
             if server:
-                # self.server.add_path("/api/_store/{api_id}/{id}/*", self.process)
                 server.add_path("/api/_store/{api_id}/*", self.process)
-                server.registry_hook(ServerEvent.before_response, self.inject_stores)
+                server.registry_hook(ServerEvent.on_response, self.inject_stores)
 
             self._initialized = True
 
