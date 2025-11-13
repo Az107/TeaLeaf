@@ -12,4 +12,4 @@ def enable_reactivity(server: Server):
         if isinstance(res_body, Component):
             res_body.append(helper_script)
 
-    server.registry_hook(ServerEvent.before_response, event_handler)
+    server.registry_hook(ServerEvent.on_response, event_handler)

@@ -204,8 +204,9 @@ def return_helper():
 
 
 class ServerEvent(Enum):
-    before_response = "before_response"
+    on_response = "on_response"
     on_request = "on_request"
+    path_registered = "path_registered"
     new_session = "new_session"
 
 
@@ -228,7 +229,6 @@ class Server:
         event_hooks.append(callback)
 
     def __call_hook__(self, event: ServerEvent, *payload):
-        pass
         events = self._hooks.get(event)
         if events is None:
             return
@@ -239,7 +239,7 @@ class Server:
         """Generates a unique session ID."""
         session_id = str(uuid4())
         self.sessions[session_id] = Session()
-        self.__call_hook__(ServerEvent.new_session, self.sessions[session_id])
+        self.__call_hook__(ServerEvent.new_session, session_id, self.sessions[session_id])
         return session_id
 
     def route(self, path):
@@ -255,6 +255,7 @@ class Server:
         """Manually adds a route-handler mapping."""
 
         path_regex = path_to_regex(path)
+        self.__call_hook__(ServerEvent.path_registered, path, path_regex, func)
         self.routes[path_regex] = func
 
     def __handle_session__(self, cookies: dict):
@@ -266,6 +267,8 @@ class Server:
             session_id = cookies["TeaLeaf-Session"]
             if self.sessions.get(session_id) is None:
                 self.sessions[session_id] = Session()
+                self.__call_hook__(ServerEvent.new_session, session_id, self.sessions[session_id])
+
 
         return self.sessions[session_id], header_session_cookie
 
@@ -284,7 +287,7 @@ class Server:
         else:
             res_body = response
 
-        self.__call_hook__(ServerEvent.before_response, res_code, res_body, res_headers)
+        self.__call_hook__(ServerEvent.on_response, res_code, res_body, res_headers)
         content_type = "text/plain"
         if isinstance(res_body, Component):
             content_type = "text/html"
